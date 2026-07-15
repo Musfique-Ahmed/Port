@@ -34,15 +34,39 @@ export function Cursor() {
 
   return (
     <>
+      {/* Soft glow halo — uses theme-aware accent ring */}
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[80] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent mix-blend-screen"
-        style={{ x: sx, y: sy }}
+        className="pointer-events-none fixed left-0 top-0 z-[79] h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          x: sx,
+          y: sy,
+          background:
+            "radial-gradient(circle, color-mix(in srgb, var(--accent) 35%, transparent) 0%, transparent 70%)",
+          filter: "blur(6px)",
+        }}
       />
+      {/* Outer ring — outlined so it reads on any background */}
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[79] h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-md"
-        style={{ x: sx, y: sy }}
+        className="pointer-events-none fixed left-0 top-0 z-[80] h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+        style={{
+          x: sx,
+          y: sy,
+          borderColor: "var(--accent)",
+          backgroundColor:
+            "color-mix(in srgb, var(--accent) 8%, transparent)",
+        }}
+      />
+      {/* Solid dot — always-on inner marker */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none fixed left-0 top-0 z-[81] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          x: sx,
+          y: sy,
+          backgroundColor: "var(--accent)",
+        }}
       />
     </>
   );

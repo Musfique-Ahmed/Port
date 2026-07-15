@@ -18,16 +18,20 @@ const config: Config = {
     },
     extend: {
       colors: {
-        ink: "#09090B",
-        surface: "#111113",
-        "surface-2": "#161618",
-        hairline: "rgba(255,255,255,0.08)",
-        "muted-1": "#A1A1AA",
-        "muted-2": "#71717A",
+        // Theme-aware tokens — driven by CSS variables in :root / .light
+        ink: "var(--bg)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        inset: "var(--inset)",
+        foreground: "var(--text)",
+        hairline: "var(--hairline)",
+        "muted-1": "var(--muted-1)",
+        "muted-2": "var(--muted-2)",
+        "muted-3": "var(--muted-3)",
         accent: {
-          DEFAULT: "#10B981",
-          fg: "#34D399",
-          dim: "rgba(16,185,129,0.12)",
+          DEFAULT: "var(--accent)",
+          fg: "var(--accent-fg)",
+          dim: "var(--accent-dim)",
         },
       },
       fontFamily: {
@@ -47,15 +51,15 @@ const config: Config = {
       },
       backgroundImage: {
         "radial-fade":
-          "radial-gradient(ellipse at top, rgba(255,255,255,0.06), transparent 60%)",
+          "radial-gradient(ellipse at top, var(--hairline-strong), transparent 60%)",
         "grid-light":
-          "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          "linear-gradient(to right, var(--hairline) 1px, transparent 1px), linear-gradient(to bottom, var(--hairline) 1px, transparent 1px)",
         "accent-grad":
-          "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
+          "linear-gradient(135deg, var(--accent) 0%, var(--accent-fg) 100%)",
       },
       boxShadow: {
-        "glow-accent": "0 0 0 1px rgba(16,185,129,0.25), 0 8px 30px -8px rgba(16,185,129,0.35)",
-        "card-hover": "0 20px 50px -20px rgba(0,0,0,0.7)",
+        "glow-accent": "0 0 0 1px var(--accent-ring), 0 8px 30px -8px var(--accent-shadow)",
+        "card-hover": "0 20px 50px -20px var(--shadow-card)",
       },
       keyframes: {
         "fade-in": {

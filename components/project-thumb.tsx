@@ -198,11 +198,12 @@ function Vizball() {
         <line x1="0" y1="0" x2="0" y2="280" stroke="rgba(255,255,255,0.08)" />
         {/* bars */}
         {Array.from({ length: 12 }).map((_, i) => {
-          const h = 40 + Math.abs(Math.sin(i * 0.9)) * 220;
+          const h = Math.round(40 + Math.abs(Math.sin(i * 0.9)) * 220);
+          const y = Math.round(280 - h);
           return (
             <g key={i}>
-              <rect x={i * 56 + 8} y={280 - h} width="36" height={h} rx="6" fill="#10B981" opacity={0.15 + (i % 3) * 0.2} />
-              <rect x={i * 56 + 8} y={280 - h} width="36" height={4} rx="2" fill="#34D399" />
+              <rect x={i * 56 + 8} y={y} width="36" height={h} rx="6" fill="#10B981" opacity={0.15 + (i % 3) * 0.2} />
+              <rect x={i * 56 + 8} y={y} width="36" height={4} rx="2" fill="#34D399" />
             </g>
           );
         })}

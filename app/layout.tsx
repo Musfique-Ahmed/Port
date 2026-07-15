@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: `${site.name} — ${site.role.join(" · ")}`,
     description: site.description,
     images: [site.ogImage],
-    creator: "@musfique",
+    creator: "@Musfique-Ahmed",
   },
   robots: {
     index: true,
@@ -118,14 +118,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           <LoadingScreen />
           <ScrollProgress />
           <Cursor />
           <a
             href="#main"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-md focus:bg-accent focus:px-3 focus:py-2 focus:text-ink"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-md focus:bg-accent focus:px-3 focus:py-2 focus:text-white"
           >
             Skip to content
           </a>

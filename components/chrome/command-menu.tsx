@@ -20,6 +20,8 @@ import {
   Linkedin,
   Search,
   ArrowRight,
+  Phone,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,9 +94,11 @@ const BLOG: Item[] = [
 ];
 
 const SOCIALS: Item[] = [
-  { label: "GitHub", href: "https://github.com/musfique", Icon: Github, group: "Connect" },
-  { label: "LinkedIn", href: "https://linkedin.com/in/musfique", Icon: Linkedin, group: "Connect" },
-  { label: "Email", href: "mailto:musfique@example.com", Icon: Mail, group: "Connect" },
+  { label: "GitHub", href: "https://github.com/Musfique-Ahmed", Icon: Github, group: "Connect" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/musfique-ahmed-ds/", Icon: Linkedin, group: "Connect" },
+  { label: "Email", href: "mailto:anikmushfik@gmail.com", Icon: Mail, group: "Connect" },
+  { label: "Phone", href: "tel:+8801961905838", Icon: Phone, group: "Connect" },
+  { label: "Portfolio", href: "https://musfique-ahmed.github.io/portfolio/", Icon: Globe, group: "Connect" },
 ];
 
 const ALL: Item[] = [...NAV, ...PROJECTS, ...BLOG, ...SOCIALS];

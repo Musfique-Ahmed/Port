@@ -62,7 +62,7 @@ export const projects: Project[] = [
       { label: "Inference", value: "24 FPS" },
       { label: "Classes", value: "3 violations" },
     ],
-    github: "https://github.com/musfique/ai-traffic-violation",
+    github: "https://github.com/Musfique-Ahmed/ai-traffic-violation",
     thumbnail: "/projects/traffic.svg",
     highlights: [
       "Tuned detector head for small riders and partial occlusion.",
@@ -104,7 +104,7 @@ export const projects: Project[] = [
       { label: "Samples", value: "12,403" },
       { label: "Baselines", value: "5" },
     ],
-    github: "https://github.com/musfique/banglish-hate-bench",
+    github: "https://github.com/Musfique-Ahmed/banglish-hate-bench",
     blog: "/blog/building-banglish-benchmark",
     thumbnail: "/projects/banglish.svg",
     highlights: [
@@ -147,8 +147,8 @@ export const projects: Project[] = [
       { label: "TTFB", value: "120 ms" },
       { label: "Lighthouse", value: "98" },
     ],
-    github: "https://github.com/musfique/fullstack-ecommerce",
-    live: "https://example.com",
+    github: "https://github.com/Musfique-Ahmed/fullstack-ecommerce",
+    live: "https://github.com/Musfique-Ahmed/fullstack-ecommerce",
     thumbnail: "/projects/ecommerce.svg",
   },
   {
@@ -181,7 +181,7 @@ export const projects: Project[] = [
       { label: "Offline", value: "queue + retry" },
       { label: "Beta testers", value: "120" },
     ],
-    github: "https://github.com/musfique/my-safety-app",
+    github: "https://github.com/Musfique-Ahmed/my-safety-app",
     thumbnail: "/projects/safety.svg",
   },
   {
@@ -213,8 +213,8 @@ export const projects: Project[] = [
       { label: "Datasets", value: "6 sports" },
       { label: "Render", value: "client SVG" },
     ],
-    github: "https://github.com/musfique/vizball",
-    live: "https://example.com",
+    github: "https://github.com/Musfique-Ahmed/vizball",
+    live: "https://github.com/Musfique-Ahmed/vizball",
     thumbnail: "/projects/vizball.svg",
   },
   {
@@ -247,7 +247,7 @@ export const projects: Project[] = [
       { label: "Top driver", value: "inflight wifi" },
       { label: "Stakeholders", value: "ops · marketing" },
     ],
-    github: "https://github.com/musfique/airline-satisfaction",
+    github: "https://github.com/Musfique-Ahmed/airline-satisfaction",
     thumbnail: "/projects/airline.svg",
   },
 ];

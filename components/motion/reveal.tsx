@@ -18,7 +18,7 @@ export function FadeUp({
     <motion.div
       initial={reduce ? { opacity: 0 } : { opacity: 0, y }}
       whileInView={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.7, ease, delay }}
       className={cn(className)}
       {...rest}
@@ -32,14 +32,20 @@ export function Stagger({
   children,
   className,
   delayChildren = 0.05,
-  staggerChildren = 0.06,
-}: React.PropsWithChildren<{ className?: string; delayChildren?: number; staggerChildren?: number }>) {
+  staggerChildren = 0.07,
+  margin = "-80px",
+}: React.PropsWithChildren<{
+  className?: string;
+  delayChildren?: number;
+  staggerChildren?: number;
+  margin?: string;
+}>) {
   const reduce = useReducedMotion();
   return (
     <motion.div
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, amount: 0.05, margin }}
       variants={{
         hidden: {},
         show: {

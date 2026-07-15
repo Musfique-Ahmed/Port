@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, Mail, Github, Linkedin, MapPin, Download, FileText } from "lucide-react";
+import { ArrowUpRight, Mail, Github, Linkedin, MapPin, Download, FileText, Phone, Globe } from "lucide-react";
 import { Magnetic } from "@/components/motion/magnetic";
 import { Button } from "@/components/ui/button";
 import { site } from "@/lib/site";
@@ -14,16 +14,28 @@ const SOCIALS = [
     Icon: Mail,
   },
   {
+    label: "Phone",
+    value: site.phone,
+    href: `tel:${site.phone?.replace(/\s+/g, "")}`,
+    Icon: Phone,
+  },
+  {
     label: "GitHub",
-    value: "@musfique",
+    value: "@Musfique-Ahmed",
     href: site.socials.github,
     Icon: Github,
   },
   {
     label: "LinkedIn",
-    value: "/in/musfique",
+    value: "/in/musfique-ahmed-ds",
     href: site.socials.linkedin,
     Icon: Linkedin,
+  },
+  {
+    label: "Portfolio",
+    value: "musfique-ahmed.github.io",
+    href: site.socials.portfolio,
+    Icon: Globe,
   },
   {
     label: "Location",

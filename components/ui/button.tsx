@@ -6,19 +6,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         primary:
-          "bg-white text-ink hover:bg-white/90 active:scale-[0.98]",
+          "bg-foreground text-background hover:bg-foreground/90 active:scale-[0.98]",
         accent:
-          "bg-accent text-ink hover:bg-accent-fg active:scale-[0.98] shadow-glow-accent",
+          "bg-accent text-white hover:bg-accent-fg active:scale-[0.98] shadow-glow-accent",
         ghost:
-          "bg-transparent text-white hover:bg-white/5 border border-hairline",
+          "bg-transparent text-foreground hover:bg-foreground/[0.05] border border-hairline",
         outline:
-          "bg-transparent text-white border border-hairline hover:border-white/30 hover:bg-white/[0.03]",
-        link: "text-white underline-offset-4 hover:underline",
+          "bg-transparent text-foreground border border-hairline hover:border-foreground/30 hover:bg-foreground/[0.03]",
+        link: "text-foreground underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-9 px-4",

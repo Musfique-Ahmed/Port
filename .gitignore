@@ -41,3 +41,26 @@ next-env.d.ts
 
 # content cache
 .cache/
+
+# local tooling state (puku-cli, plan files)
+/.puku/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# logs
+logs/
+*.log
+
+# environment overrides
+.env.local
+.env.development.local
+.env.production.local

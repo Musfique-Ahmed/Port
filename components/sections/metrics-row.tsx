@@ -10,7 +10,6 @@ type Metric = {
 };
 
 const METRICS: Metric[] = [
-  { label: "CGPA", value: 3.8, decimals: 2, suffix: " / 4.00", caption: "B.Sc. Data Science" },
   { label: "Published Papers", value: 1, suffix: "+", caption: "IEEE conference" },
   { label: "Shipped Projects", value: 12, suffix: "+", caption: "production & research" },
   { label: "Scholarships", value: 2, suffix: "", caption: "merit-based awards" },
@@ -29,7 +28,7 @@ export function MetricsRow() {
             Draft · pending user confirmation
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-hairline bg-hairline md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-hairline bg-hairline md:grid-cols-4">
           {METRICS.map((m) => (
             <div key={m.label} className="bg-surface p-6 md:p-8">
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-2">
