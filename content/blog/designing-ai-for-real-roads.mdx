@@ -1,0 +1,23 @@
+---
+title: "Designing AI Systems for Real Roads"
+description: "Notes from building a real-time traffic violation detector that has to work where there are no clean lanes."
+date: "2025-05-21"
+category: "Engineering"
+tags: ["Computer Vision", "YOLO", "Production"]
+---
+
+A demo on a curated dataset is one thing. A detector that runs on a busy Bangladeshi junction at noon is another. Here are the things I wish someone had told me earlier.
+
+## The data shape is the bottleneck
+
+If your training set doesn't look like your deployment footage, your mAP doesn't matter. Public benchmarks tend to be clean, well-lit, and shot from a fixed camera. Local roads are none of those.
+
+We ended up building our own small, messy, annotated set. It paid off more than any architecture change.
+
+## Thresholds beat architectures
+
+Most "detector not working" complaints are threshold complaints. Per-class confidence calibration gets you 80% of the production-quality improvement you actually need.
+
+## Latency is a feature
+
+A correct detector at 4 FPS is useless for live enforcement. A slightly less accurate detector at 24 FPS is fine. Optimize for what the human in the loop can actually use.

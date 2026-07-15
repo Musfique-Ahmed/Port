@@ -1,0 +1,28 @@
+---
+title: "Building the Banglish Hate Speech Benchmark"
+description: "What we learned building a reproducible benchmark for hate speech in code-mixed Bangla-English text — and why most of NLP still gets it wrong."
+date: "2025-06-12"
+category: "Research"
+tags: ["NLP", "Benchmark", "Reproducibility"]
+---
+
+Most hate-speech datasets in South-Asian languages were built by accident: scraped, labeled by one or two annotators, and frozen into a CSV that everyone quietly trusts. We wanted to do the opposite — design a benchmark where the protocol, not just the labels, was the contribution.
+
+## Why code-mixed Bangla-English is different
+
+Standard multilingual models handle English and Bangla well. The same models, on a sentence like `tui valo na, tui fake news korechis`, do something between confident and confused — usually the latter, and usually in the wrong direction.
+
+The mistake people make is treating transliterated Bangla as a spelling variant. It isn't. It carries code-switching cues, sentiment markers, and a register that has no clean monolingual analog.
+
+## What we shipped
+
+- A 12,403-sample corpus with stratified author-disjoint splits
+- Five baselines (SVM, ComplementNB, mBERT, XLM-R, BanglaBERT)
+- A reproducible evaluation script and public leaderboard
+- An error taxonomy targeted at ambiguous samples
+
+## What we learned
+
+The numbers don't tell you the whole story. The interesting signal is in the *kinds* of mistakes each model makes. mBERT over-predicts on benign phrases that include English profanity. XLM-R is better calibrated but gets confused by dialect. SVM-TFIDF, embarrassingly, holds up as a baseline because of n-gram features on a small labeled set.
+
+The benchmark is the smallest part of the contribution. The protocol is the rest.

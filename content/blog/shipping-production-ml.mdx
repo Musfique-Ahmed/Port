@@ -1,0 +1,16 @@
+---
+title: "Shipping Production ML"
+description: "Six things I learned the hard way moving from notebooks to systems people actually use."
+date: "2025-04-02"
+category: "Engineering"
+tags: ["MLOps", "Production"]
+---
+
+The difference between an ML notebook and a production ML system is mostly discipline, not architecture.
+
+1. **Eval sets that match the world, not the textbook.** If your offline metrics don't move with the product, you don't have a model — you have a homework assignment.
+2. **Reproducibility is a feature.** Pin everything. Pretend you are returning to the model in six months and you have amnesia.
+3. **Latency budgets are sacred.** A 50ms regression turns into a 5% revenue loss. Instrument early.
+4. **Drift happens quietly.** Set up distribution checks before you need them.
+5. **The hardest problem is data quality.** Nothing replaces a real, opinionated EDA.
+6. **Ship the boring version.** The clever model is for the next iteration.
