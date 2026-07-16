@@ -21,6 +21,7 @@ export function FadeUp({
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.7, ease, delay }}
       className={cn(className)}
+      suppressHydrationWarning
       {...rest}
     >
       {children}
@@ -55,6 +56,7 @@ export function Stagger({
         },
       }}
       className={cn(className)}
+      suppressHydrationWarning
     >
       {children}
     </motion.div>
@@ -68,7 +70,7 @@ export const itemFadeUp = {
 
 export function Item({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <motion.div variants={itemFadeUp} className={cn(className)}>
+    <motion.div variants={itemFadeUp} className={cn(className)} suppressHydrationWarning>
       {children}
     </motion.div>
   );
