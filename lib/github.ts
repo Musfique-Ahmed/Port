@@ -196,12 +196,15 @@ export function buildHeatmapGrid(
   const startSunday = new Date(endSunday);
   startSunday.setUTCDate(endSunday.getUTCDate() - (weeks - 1) * 7);
 
-  // Determine thresholds for level classification
+  // GitHub's data-level is already a 0..4 bucket. If the input is already
+  // in that range, pass it through. Otherwise derive by relative max.
   const counts = Array.from(dayCounts.values());
   const max = counts.length ? Math.max(...counts) : 0;
+  const looksLikeLevel = counts.every((v) => v >= 0 && v <= 4);
   const bucket = (n: number): 0 | 1 | 2 | 3 | 4 => {
     if (n === 0) return 0;
-    if (max <= 1) return n > 0 ? 2 : 0;
+    if (looksLikeLevel) return Math.min(4, Math.max(0, Math.round(n))) as 0 | 1 | 2 | 3 | 4;
+    if (max <= 1) return 2;
     const r = n / max;
     if (r > 0.75) return 4;
     if (r > 0.5) return 3;

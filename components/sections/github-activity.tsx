@@ -62,12 +62,14 @@ function HeatmapGrid({
 }: {
   grid: ReturnType<typeof buildHeatmapGrid>;
 }) {
-  // 5 levels: 0 (empty), 1-4 (low to high)
+  // 5 levels: 0 (empty), 1-4 (low to high). Colors sit on a dark surface,
+  // so we use slightly higher opacities than GitHub does (which uses
+  // green on white) — otherwise level-1 is invisible against bg-ink.
   const levelClasses: Record<0 | 1 | 2 | 3 | 4, string> = {
-    0: "bg-muted-3/20",
-    1: "bg-accent/20",
-    2: "bg-accent/40",
-    3: "bg-accent/70",
+    0: "bg-surface-2",
+    1: "bg-accent/30",
+    2: "bg-accent/55",
+    3: "bg-accent/80",
     4: "bg-accent",
   };
   return (
@@ -103,10 +105,12 @@ async function HeatmapBlock() {
     scrapeContributionLevels(),
     scrapeYearTotal(),
   ]);
-  // Levels are 0..4 buckets; treat them as counts so buildHeatmapGrid's
-  // existing bucket math maps them back to the same 0..4 visual.
+  // Levels are 0..4 buckets directly from GitHub's contribution graph.
+  // Pass them through; buildHeatmapGrid preserves the level values.
   const dayCounts = levels ?? new Map<string, number>();
-  const grid = buildHeatmapGrid(dayCounts, 12);
+  // 26 weeks ≈ 6 months gives a useful shape — long enough to capture
+  // burst patterns (sprints, semester work) but recent enough to feel live.
+  const grid = buildHeatmapGrid(dayCounts, 26);
   const hasActivity = dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
   // Build month labels along the top axis.
@@ -130,7 +134,7 @@ async function HeatmapBlock() {
           <div>
             <div className="text-sm font-semibold text-white">Currently shipping</div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-muted-2">
-              Last 12 weeks · public activity
+              Last 6 months · public activity
             </div>
           </div>
         </div>
@@ -182,10 +186,10 @@ async function HeatmapBlock() {
                 key={l}
                 className={cn(
                   "h-3 w-3 rounded-sm border border-hairline",
-                  l === 0 && "bg-muted-3/20",
-                  l === 1 && "bg-accent/20",
-                  l === 2 && "bg-accent/40",
-                  l === 3 && "bg-accent/70",
+                  l === 0 && "bg-surface-2",
+                  l === 1 && "bg-accent/30",
+                  l === 2 && "bg-accent/55",
+                  l === 3 && "bg-accent/80",
                   l === 4 && "bg-accent"
                 )}
               />
