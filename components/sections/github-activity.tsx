@@ -63,14 +63,14 @@ function HeatmapGrid({
   grid: ReturnType<typeof buildHeatmapGrid>;
 }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-[3px]">
       {grid.map((col, i) => (
-        <div key={i} className="flex flex-col gap-1">
+        <div key={i} className="flex flex-col gap-[3px]">
           {col.map((cell) => (
             <div
               key={cell.date}
               title={`${cell.date} · ${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-              className="h-3 w-3 rounded-sm border border-hairline transition-colors"
+              className="h-[11px] w-[11px] rounded-sm transition-colors"
               style={{ backgroundColor: HEATMAP_LEVEL_BG[cell.level] }}
             />
           ))}
@@ -80,13 +80,15 @@ function HeatmapGrid({
   );
 }
 
-// Module-scope so the legend and the grid use the same hex values.
+// GitHub's own contribution-graph palette (dark mode). Used directly so
+// the heatmap matches the reference exactly. These are GitHub's published
+// dark-mode hex values from their primer/css repo.
 const HEATMAP_LEVEL_BG: Record<0 | 1 | 2 | 3 | 4, string> = {
-  0: "#161618", // surface-2 — empty cell
-  1: "#1B3A2C", // very dim emerald
-  2: "#10B981", // mid emerald at ~33%
-  3: "#34D399", // accent-fg — bright emerald
-  4: "#10B981", // accent — full emerald
+  0: "#161B22", // empty — matches GitHub dark bg
+  1: "#033A16", // muted green
+  2: "#196C2E", // medium green
+  3: "#2EA043", // bright green
+  4: "#39D353", // vivid green (most active)
 };
 
 function cn(...c: (string | false | undefined | null)[]) {
@@ -150,12 +152,12 @@ async function HeatmapBlock() {
       <div className="mt-6 overflow-x-auto">
         <div className="min-w-fit">
           {/* Month labels */}
-          <div className="relative mb-1 ml-7 h-3 text-[10px] font-mono uppercase tracking-wider text-muted-2">
+          <div className="relative mb-2 ml-9 h-3 text-[10px] font-mono uppercase tracking-wider text-muted-2">
             {monthLabels.map((m) => (
               <span
                 key={m.col}
                 className="absolute"
-                style={{ left: `${m.col * 16}px` }}
+                style={{ left: `${m.col * 14}px` }}
               >
                 {m.label}
               </span>
@@ -163,28 +165,28 @@ async function HeatmapBlock() {
           </div>
           <div className="flex gap-3">
             {/* Day labels */}
-            <div className="flex flex-col gap-1 pt-0.5 font-mono text-[10px] uppercase text-muted-2">
-              <span className="h-3">Sun</span>
-              <span className="h-3" />
-              <span className="h-3">Tue</span>
-              <span className="h-3" />
-              <span className="h-3">Thu</span>
-              <span className="h-3" />
-              <span className="h-3">Sat</span>
+            <div className="flex flex-col gap-[3px] pt-[1px] font-mono text-[10px] uppercase text-muted-2">
+              <span className="h-[11px]">Mon</span>
+              <span className="h-[11px]" />
+              <span className="h-[11px]">Wed</span>
+              <span className="h-[11px]" />
+              <span className="h-[11px]">Fri</span>
+              <span className="h-[11px]" />
+              <span className="h-[11px]" />
             </div>
             <HeatmapGrid grid={grid} />
           </div>
           {/* Legend */}
-          <div className="mt-4 flex items-center justify-end gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-2">
-            <span>Less</span>
+          <div className="mt-4 flex items-center justify-end gap-[3px] font-mono text-[10px] uppercase tracking-wider text-muted-2">
+            <span className="mr-1.5">Less</span>
             {([0, 1, 2, 3, 4] as const).map((l) => (
               <span
                 key={l}
-                className="h-3 w-3 rounded-sm border border-hairline"
+                className="h-[11px] w-[11px] rounded-sm"
                 style={{ backgroundColor: HEATMAP_LEVEL_BG[l] }}
               />
             ))}
-            <span>More</span>
+            <span className="ml-1.5">More</span>
           </div>
         </div>
       </div>
