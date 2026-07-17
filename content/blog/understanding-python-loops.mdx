@@ -1,0 +1,54 @@
+---
+title: "Understanding Python Loops: A Beginner's Guide"
+description: "A practical starter reference for `for` loops, `while` loops, and loop control statements with short, runnable examples."
+date: "2025-06-05"
+category: "Archive"
+tags: ["Archive", "Python", "Beginner"]
+---
+
+Loops are one of the first concepts that make code powerful. Instead of repeating lines manually, you write a repeat rule and let Python handle the iteration.
+
+## The `for` loop
+
+Use a `for` loop when you already know the sequence you want to iterate over, such as a list, tuple, string, or range.
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+for fruit in fruits:
+    print(fruit)
+```
+
+For index-style iteration, `range()` is the usual choice:
+
+```python
+for i in range(5):
+    print(i)
+```
+
+## The `while` loop
+
+Use `while` when repetition depends on a condition that may change during execution.
+
+```python
+count = 1
+while count <= 5:
+    print(count)
+    count += 1
+```
+
+A `while` loop can become infinite if the condition never changes. Always ensure state updates are explicit.
+
+## Loop control tools
+
+- `break`: stop the loop immediately.
+- `continue`: skip the current iteration and move to the next.
+- `pass`: placeholder used where syntax requires a statement.
+
+## Practical advice for beginners
+
+1. Print intermediate values while learning loop behavior.
+2. Start with short sequences before handling large datasets.
+3. Use descriptive variable names so loop intent is obvious.
+
+> Most loop mistakes are not syntax issues. They are logic issues around condition design and state updates.

@@ -91,6 +91,14 @@ const BLOG: Item[] = [
   { label: "Designing AI Systems for Real Roads", href: "/blog/designing-ai-for-real-roads", Icon: BookOpen, group: "Blog" },
   { label: "Shipping Production ML", href: "/blog/shipping-production-ml", Icon: BookOpen, group: "Blog" },
   { label: "Founder Notes: Year One", href: "/blog/founder-notes-year-one", Icon: BookOpen, group: "Blog" },
+  { label: "The Memory Wall is Crumbling", href: "/blog/memory-wall-kv-cache", Icon: BookOpen, group: "Blog", keywords: ["ai", "compression", "research"] },
+  { label: "How I Built Boutiqo Bangladesh", href: "/blog/building-boutiqo-bangladesh", Icon: BookOpen, group: "Blog", keywords: ["ecommerce", "nextjs", "fullstack"] },
+  { label: "Can the B850M D3HP Fit Two GPUs?", href: "/blog/b850m-dual-gpu-analysis", Icon: BookOpen, group: "Blog", keywords: ["hardware", "pcie"] },
+  { label: "Building a Discord To-Do List Bot", href: "/blog/discord-todo-bot", Icon: BookOpen, group: "Blog", keywords: ["discord", "python", "bot"] },
+  { label: "One Link to Rule Them All", href: "/blog/one-link-survey-automation", Icon: BookOpen, group: "Blog", keywords: ["automation", "apps script"] },
+  { label: "The Importance of Data Visualization", href: "/blog/data-visualization", Icon: BookOpen, group: "Blog", keywords: ["visualization", "archive"] },
+  { label: "Understanding Python Loops", href: "/blog/understanding-python-loops", Icon: BookOpen, group: "Blog", keywords: ["python", "beginner", "archive"] },
+  { label: "My First Steps into Data Science", href: "/blog/first-steps-data-science", Icon: BookOpen, group: "Blog", keywords: ["archive", "foundations"] },
 ];
 
 const SOCIALS: Item[] = [

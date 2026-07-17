@@ -2,10 +2,10 @@ import {
   getRecentRepos,
   getProfile,
   buildHeatmapGrid,
+  fetchContributionGraphQL,
   fetchContributionCountsViaApi,
   countsToLevels,
   scrapeContributionLevels,
-  scrapeYearTotal,
   type GitHubRepo,
   type GitHubProfile,
 } from "@/lib/github";
@@ -101,19 +101,27 @@ async function HeatmapBlock() {
   // Prefer scraping the contribution SVG (more complete data), fall back to
   // the Events API aggregation, fall back to nothing.
   // Three data sources, fetched in parallel:
-//   1. Live daily commit counts via the Stats API (token-authenticated,
-//      reflects current data — unlike the JS-hydrated HTML).
-//   2. Per-day levels scraped from the contributions HTML (fallback).
-//   3. Year total + active-days headline.
-  const [counts, scraped, yearSummary] = await Promise.all([
+//   1. GraphQL: canonical contribution graph (token-authenticated, same
+//      data GitHub's profile page hydrates to). Includes the year total.
+//   2. Stats API: top-12 repos aggregated (fallback).
+//   3. HTML scrape: pre-hydration, often stale (last resort).
+  const [graph, statsCounts, scraped] = await Promise.all([
+    fetchContributionGraphQL(),
     fetchContributionCountsViaApi(),
     scrapeContributionLevels(),
-    scrapeYearTotal(),
   ]);
-  // Prefer API counts (fresh), fall back to scraped levels.
-  const dayCounts: Map<string, number> = counts
-    ? countsToLevels(counts)
+
+  // Prefer GraphQL (canonical); fall back to Stats API (top repos only);
+  // then to HTML scrape (often stale); then to nothing.
+  const rawCounts = graph?.dailyCounts ?? statsCounts ?? null;
+  const dayCounts: Map<string, number> = rawCounts
+    ? countsToLevels(rawCounts)
     : (scraped ?? new Map<string, number>());
+
+  // Year total from GraphQL (canonical); no fallback because the year
+  // total isn't critical and a wrong number looks worse than no number.
+  const yearTotal = graph?.totalContributions ?? null;
+
   // 52 weeks ≈ 1 year matches GitHub's own profile heatmap range.
   const grid = buildHeatmapGrid(dayCounts, 52);
   const hasActivity =
@@ -149,7 +157,7 @@ async function HeatmapBlock() {
             Last year
           </div>
           <div className="text-2xl font-semibold tracking-tight text-white">
-            {yearSummary ? yearSummary.total.toLocaleString() : "—"}
+            {yearTotal !== null ? yearTotal.toLocaleString() : "—"}
           </div>
           <div className="mt-0.5 font-mono text-[10px] text-muted-2">
             contributions

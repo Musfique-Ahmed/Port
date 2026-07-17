@@ -156,24 +156,80 @@ export async function scrapeContributionLevels(): Promise<Map<string, number> | 
   }
 }
 
-// Fetch the live, auth-resolved contribution graph using the Stats API.
-// Requires a token. This returns fresh data — unlike scraping the HTML
-// page, which is server-rendered and lags behind the JS-hydrated client
-// view.
+// Fetch the live, auth-resolved contribution graph via the GraphQL API.
+// Requires a token. This returns the canonical contribution data — the
+// same source GitHub's own profile page renders after JS hydration.
 //
-// Returns Map<date-YYYY-MM-DD, count> or null on failure.
+// Returns:
+//   - dailyCounts: Map<date-YYYY-MM-DD, count>
+//   - totalContributions: number
+//   - activeDays: number
 //
-// Implementation note: GitHub's REST API has no endpoint for daily
-// contribution counts. The GraphQL API has `contributionsCollection` but
-// it requires query complexity approval on top of normal scopes. As a
-// pragmatic alternative, we use the Stats API (`/repos/{owner}/{repo}/
-// stats/commit_activity`) for the user's repos and aggregate.
-// That endpoint returns the same totals GitHub shows in the profile.
+// Returns null on failure (no token, rate-limited, etc.) so callers
+// can fall back to the HTML scrape.
+export async function fetchContributionGraphQL(): Promise<{
+  dailyCounts: Map<string, number>;
+  totalContributions: number;
+  activeDays: number;
+} | null> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return null;
+  try {
+    const res = await fetch("https://api.github.com/graphql", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `query {
+          user(login: "${USER}") {
+            contributionsCollection {
+              contributionCalendar {
+                totalContributions
+                weeks {
+                  contributionDays { date contributionCount }
+                }
+              }
+            }
+          }
+        }`,
+      }),
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const calendar = json?.data?.user?.contributionsCollection?.contributionCalendar;
+    if (!calendar) return null;
+
+    const dailyCounts = new Map<string, number>();
+    let activeDays = 0;
+    for (const week of calendar.weeks) {
+      for (const day of week.contributionDays) {
+        if (day.contributionCount > 0) {
+          dailyCounts.set(day.date, day.contributionCount);
+          activeDays++;
+        }
+      }
+    }
+    return {
+      dailyCounts,
+      totalContributions: calendar.totalContributions,
+      activeDays,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Legacy: Stats API aggregation (kept as a fallback for edge cases
+// where GraphQL returns empty). Aggregates commit_activity across the
+// user's top repos. Less complete than GraphQL (only top-12 repos),
+// so prefer fetchContributionGraphQL when available.
 export async function fetchContributionCountsViaApi(): Promise<Map<string, number> | null> {
   const token = process.env.GITHUB_TOKEN;
   if (!token) return null;
   try {
-    // List all repos owned by the user.
     const reposRes = await fetch(
       `https://api.github.com/users/${USER}/repos?per_page=100&type=owner&sort=pushed`,
       { headers: authHeaders(), next: { revalidate: 3600 } }
@@ -181,8 +237,6 @@ export async function fetchContributionCountsViaApi(): Promise<Map<string, numbe
     if (!reposRes.ok) return null;
     const repos: GitHubRepo[] = await reposRes.json();
 
-    // Hit commit_activity for each (in parallel, with a soft cap to avoid
-    // blowing the secondary rate limit on very large accounts).
     const TOP_N = 12;
     const targets = repos.slice(0, TOP_N);
     const results = await Promise.allSettled(
@@ -194,16 +248,10 @@ export async function fetchContributionCountsViaApi(): Promise<Map<string, numbe
       )
     );
 
-    // Aggregate: each successful response is an array of {week, total, days[]}.
-    // Each days[] is 7 entries with day count (0 = Sunday).
     const dailyCounts = new Map<string, number>();
     for (const r of results) {
       if (r.status !== "fulfilled" || !r.value) continue;
-      for (const week of r.value as {
-        week: number;
-        days: number[];
-      }[]) {
-        // week is a unix timestamp for the Sunday of that week.
+      for (const week of r.value as { week: number; days: number[] }[]) {
         const sunday = new Date(week.week * 1000);
         for (let d = 0; d < 7; d++) {
           const date = new Date(sunday);

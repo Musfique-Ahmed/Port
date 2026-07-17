@@ -1,0 +1,68 @@
+---
+title: "Building a Discord To-Do List Bot That Actually Fits My Brain"
+description: "Engineering notes on designing slash-command UX, lightweight JSON persistence, and a maintainable bot architecture that matches how I actually work."
+date: "2025-11-25"
+category: "Engineering"
+tags: ["Python", "Discord Bot", "Productivity"]
+---
+
+This project started as a simple productivity need: keep actionable tasks inside Discord without adding more tools, tabs, or friction.
+
+## Why build instead of install
+
+Existing to-do bots were either unmaintained, overcomplicated, or mismatched with how I organize tasks. Building a custom bot gave me clear control over behavior, command naming, and data structure.
+
+## Core product goals
+
+- Slash commands only for discoverable usage.
+- Multiple named lists per server.
+- Durable storage that survives restarts.
+- Fast bulk task input for planning sessions.
+
+## Technology choices
+
+- Runtime: **Python**
+- Library: **`discord.py` with `app_commands`**
+- Persistence: **JSON file (`todo_data.json`)**
+- Secrets: **environment variable in `.env`**
+
+JSON was selected intentionally for simplicity. For this scope, it is enough and keeps the project easy to move across environments.
+
+## Data model
+
+Data is scoped by Discord guild ID so each server has isolation by default.
+
+```json
+{
+  "guild_id": {
+    "current_list": "default",
+    "lists": {
+      "default": []
+    }
+  }
+}
+```
+
+## Command design
+
+All functionality is grouped under `/todo` to keep command discovery clean:
+
+- `/todo add` and `/todo add-bulk` for input flow.
+- `/todo list` for indexed output.
+- `/todo check` and `/todo uncheck` for status updates.
+- `/todo create-list`, `/todo switch`, and `/todo delete-list` for context control.
+
+## Deployment path
+
+The bot can run locally in seconds and can be deployed to Railway, Render, Heroku, or a VPS depending on uptime and budget needs. Setup remains simple:
+
+```bash
+pip install -r requirements.txt
+python todo_bot.py
+```
+
+## Outcome and lesson
+
+The final bot solved the original workflow problem with fewer dependencies and better predictability than off-the-shelf options.
+
+> Good tooling is not always feature-rich. It is often just opinionated enough to match real usage patterns.

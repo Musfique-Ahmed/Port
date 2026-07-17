@@ -1,0 +1,168 @@
+---
+title: "How I Built Boutiqo Bangladesh: From Static Boutique Site to Full-Stack E-commerce Platform"
+description: "An end-to-end breakdown of architecture decisions, tech stack rationale, deployment strategy, and operational automations for a $0-cost boutique e-commerce system."
+date: "2026-03-30"
+category: "Engineering"
+tags: ["Next.js", "Full-Stack", "DevOps"]
+---
+
+A complete technical case study on designing, building, and deploying a production-ready e-commerce platform with modular APIs, real-time updates, and zero infrastructure cost.
+
+**Live project:** [Platform](https://boutiqo-bangladesh.vercel.app/) · [GitHub repository](https://github.com/Musfique-Ahmed/Boutiqo-Bangladesh)
+
+---
+
+- **Business-first build**
+- **$0-cost deployment**
+- **Full-stack migration**
+- **5+ operational automations**
+- **Phased migration** (incremental shift from static to API-backed architecture)
+
+## Why I built this
+
+Boutiqo Bangladesh started as a practical business need: create a fast, elegant online storefront for boutique fashion in Bangladesh, while keeping operating costs near zero.
+
+The first version was a static site with hardcoded product data and social-media-based ordering. It worked, but growth exposed clear limits:
+
+- Product updates were manual and time-consuming.
+- Orders were not tracked in a structured way.
+- Reviews were local-only (browser storage), not centralized.
+- There was no admin control panel, no robust analytics, and no scalable workflow.
+
+I rebuilt the platform as a modern full-stack system with a maintainable architecture, while preserving the original brand identity and still running everything on free tiers.
+
+## Product vision
+
+The goal was not just "make a website." It was a complete operational system for a boutique business:
+
+- A polished storefront for discovery and conversion.
+- A structured on-site order flow and tracking.
+- An admin dashboard for products, orders, reviews, and operations.
+- Automated notifications and real-time updates.
+- A roadmap for analytics and AI features.
+
+## Tech stack and why I chose it
+
+### Core application
+
+- **Next.js 14** (App Router)
+- **TypeScript**
+- **React 18**
+- **Tailwind CSS**
+
+App Router enables clean route organization for storefront, admin, and API in one codebase. TypeScript keeps contracts consistent across frontend, backend, and database models. Tailwind plus custom global CSS preserved the brand design while keeping development fast.
+
+### Data layer
+
+- **MongoDB Atlas** (M0 free tier)
+- **Mongoose**
+- **Zod** for validation
+
+MongoDB fits flexible product and order structures, especially in early-stage evolution. Mongoose schemas and indexes improve consistency and query performance. Zod gives strict runtime input validation at API boundaries.
+
+### Auth, real-time, and notifications
+
+- **JWT auth** (with `jose` / `bcrypt` patterns)
+- **Pusher Channels** (real-time updates)
+- **Email** via Gmail SMTP / Resend
+- **Telegram Bot API** for admin alerts
+
+Admin authentication needed to be secure but lightweight. Orders are operationally time-sensitive, so real-time events improve response speed. Multi-channel notifications reduce missed orders.
+
+### Hosting and ops
+
+- **Vercel** for deployment and hosting
+- **GitHub** for source control and repository storage
+- **MongoDB Atlas** for managed DB
+
+All three integrate well and can run a real business-grade app at zero infrastructure cost in early stages.
+
+## Architecture deep dive
+
+The project is organized as a modular full-stack platform with clear boundaries.
+
+**System map:** Storefront + Admin UI → Domain APIs in Next.js → MongoDB Atlas → Pusher, Email, Telegram.
+
+### 1) Application layer (Next.js App Router)
+
+The `src/app` directory contains storefront routes (`/`, `/collections`, `/products/[id]`, `/about`, `/contact`, `/track-order`, …), admin routes (`/admin/*`), and API routes (`/api/*`). This keeps UI and backend endpoints in one repository while still preserving separation of concerns.
+
+### 2) API layer
+
+The API surface is segmented by domain — products, orders, reviews, admin/auth, and Pusher auth — which keeps each module understandable and testable.
+
+### 3) Data modeling
+
+The platform uses dedicated schemas for Product, Order, Admin, and Review. Unique IDs, indexed fields, explicit order lifecycle states with status history, and validation across schema and API layers moved the platform from fragile hardcoded arrays to a durable, queryable system.
+
+### 4) Security model
+
+Security is implemented through several layers: JWT-based admin authentication, cookie/session boundary for protected operations, middleware protection for admin routes, request validation on API entry points, and server-side authorization checks for admin-only endpoints.
+
+### 5) Real-time and notification architecture
+
+When an order is created or updated: the API validates the request, writes database state, Pusher events notify dashboards in real time, and email / Telegram workflows notify stakeholders.
+
+## Design system and frontend engineering
+
+A major requirement was preserving Boutiqo's existing visual identity: butter-and-gold palette (with brand black as anchor), Playfair Display headings plus Montserrat body, and signature scroll reveal, product-card hover depth, modal blur, and smooth transitions. The frontend combines Tailwind design tokens, global CSS for advanced animation, and reusable UI components.
+
+## The migration strategy
+
+A phased migration reduced breakage risk and kept the product usable during development.
+
+1. **Phase 1 — Static storefront baseline.** Validate product demand and customer buying behavior quickly.
+2. **Phase 2 — API and database foundation.** Replace hardcoded data and local-only flows with persistent backend modules.
+3. **Phase 3 — Admin + real-time operations.** Add dashboards, status workflows, and live notifications for execution speed.
+4. **Phase 4 — Analytics and AI roadmap.** Layer forecasting, reporting, and AI-assisted decision support on top.
+
+## How it is deployed and maintained (fully free)
+
+Current deployment uses free tiers: Vercel Hobby for hosting, MongoDB Atlas M0 for the database, and GitHub for repository hosting and history. At this stage, development and deployment are effectively $0.
+
+### Deployment flow
+
+1. Code is pushed to GitHub.
+2. Vercel automatically detects updates and starts a new deployment.
+3. Environment variables are managed in Vercel project settings.
+4. New version is published automatically after a successful build.
+
+This gives continuous delivery without a paid CI/CD platform.
+
+## Automations implemented
+
+- Auto deployment on Git push via Vercel + GitHub integration
+- Real-time admin updates through Pusher events
+- Email notifications for order events
+- Telegram notifications for immediate admin awareness
+- Scripted DB seeding for consistent initialization
+
+## End-to-end order flow (technical sequence)
+
+1. Customer browses products and opens the multi-step order flow.
+2. Client validates required input and sends the order payload to `/api/orders`.
+3. API validates payload (Zod), creates the order document, and assigns an order ID + status.
+4. System emits a real-time event for admin dashboard updates.
+5. Notification channels (email / Telegram) are triggered.
+6. Admin updates the order lifecycle state from the dashboard.
+7. Customer checks progress through the tracking route using the order ID.
+
+## Engineering challenges and what I learned
+
+- **Balancing brand fidelity with system modernization** — treated the design system as a non-negotiable constraint while rebuilding architecture underneath.
+- **Keeping complexity controlled** — strict module boundaries became critical as features grew.
+- **Building for scale on free infrastructure** — pragmatic efficiency first, with upgrade paths ready for paid tiers when traffic requires.
+
+## Future roadmap
+
+**Phase 2 — Analytics:** revenue and profit analysis, cost breakdowns, product performance insights, exportable financial reports.
+
+**Phase 3 — AI layer:** Gemini-powered analysis and assistant features, AI-generated business summaries, knowledge-base-assisted chatbot workflows, sentiment and trend analysis from reviews and operational data.
+
+**Operational enhancements:** more advanced monitoring and error reporting, stronger test coverage across API and UI, improved caching and performance optimization at scale, more automation around reporting and scheduled insights.
+
+## What this project represents
+
+Boutiqo Bangladesh is both a real product and a systems-engineering case study — product engineering (UX + conversion flow), backend architecture (APIs + validation + auth), data engineering fundamentals (schemas + lifecycle states), and DevOps pragmatism (CI/CD-like workflow on free tiers).
+
+> I built this platform to solve a real business workflow, not just to showcase isolated technical features. It is live, usable, and evolving, with a clear path toward analytics-driven and AI-augmented operations.
