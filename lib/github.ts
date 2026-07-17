@@ -94,6 +94,26 @@ export async function getRecentRepos(
   }
 }
 
+// Fetch ALL public repos owned by the user (no limit). Used for
+// star-count aggregation. Returns up to 100 per page; if the user
+// has more, we'd need pagination.
+export async function getAllRepos(): Promise<GitHubRepo[]> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${USER}/repos?per_page=100&sort=pushed&direction=desc&type=owner`,
+      {
+        headers: authHeaders(),
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!res.ok) return [];
+    const all: GitHubRepo[] = await res.json();
+    return all.filter((r) => !r.fork && !r.archived);
+  } catch {
+    return [];
+  }
+}
+
 export async function getRecentEvents(limit = 12): Promise<GitHubEvent[]> {
   try {
     const res = await fetch(
@@ -377,4 +397,81 @@ export function totalCommits(dayCounts: Map<string, number>): number {
   let n = 0;
   for (const v of dayCounts.values()) n += v;
   return n;
+}
+
+// Compute the longest streak (consecutive days with at least 1 commit)
+// from a daily counts map. Returns days and the start/end dates.
+export function longestStreak(
+  dayCounts: Map<string, number>
+): { days: number; start: string; end: string } | null {
+  if (dayCounts.size === 0) return null;
+  // Fill in a sparse map so empty days inside a streak still count
+  const dates = Array.from(dayCounts.keys()).sort();
+  const start = dates[0];
+  const end = dates[dates.length - 1];
+
+  let bestStart = start;
+  let bestEnd = start;
+  let bestLen = 0;
+
+  let curStart: string | null = null;
+  let curLen = 0;
+
+  // Iterate from start to end inclusive
+  const cursor = new Date(start + "T00:00:00Z");
+  const last = new Date(end + "T00:00:00Z");
+  while (cursor.getTime() <= last.getTime()) {
+    const key = cursor.toISOString().slice(0, 10);
+    const count = dayCounts.get(key) ?? 0;
+    if (count > 0) {
+      if (curStart === null) {
+        curStart = key;
+        curLen = 1;
+      } else {
+        curLen++;
+      }
+      if (curLen > bestLen) {
+        bestLen = curLen;
+        bestStart = curStart!;
+        bestEnd = key;
+      }
+    } else {
+      curStart = null;
+      curLen = 0;
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return bestLen > 0 ? { days: bestLen, start: bestStart, end: bestEnd } : null;
+}
+
+// Compute the current ongoing streak — same logic but only counts if
+// the streak extends to today (or yesterday, allowing 1 day grace).
+export function currentStreak(
+  dayCounts: Map<string, number>
+): { days: number; start: string; end: string } | null {
+  if (dayCounts.size === 0) return null;
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setUTCDate(today.getUTCDate() - 1);
+
+  // Walk back from today/yesterday counting consecutive active days.
+  const startKey = today.toISOString().slice(0, 10);
+  const yKey = yesterday.toISOString().slice(0, 10);
+
+  let cursor: Date;
+  if ((dayCounts.get(startKey) ?? 0) > 0) cursor = today;
+  else if ((dayCounts.get(yKey) ?? 0) > 0) cursor = yesterday;
+  else return null;
+
+  let count = 0;
+  let endDate = cursor.toISOString().slice(0, 10);
+  let startDate = endDate;
+  while ((dayCounts.get(cursor.toISOString().slice(0, 10)) ?? 0) > 0) {
+    count++;
+    startDate = cursor.toISOString().slice(0, 10);
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  return count > 0 ? { days: count, start: startDate, end: endDate } : null;
 }

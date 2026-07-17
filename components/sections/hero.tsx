@@ -158,78 +158,16 @@ export function Hero() {
             </motion.div>
           </div>
 
-          {/* Right: portrait monogram + terminal */}
-          <div className="flex flex-col gap-6 lg:col-span-5">
-            <PortraitMark />
-            <div>
-              <TerminalVisual className="shadow-card-hover" />
-              <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-muted-2">
-                <span>live · streaming output</span>
-                <span>updated continuously</span>
-              </div>
+          {/* Right: terminal */}
+          <div className="lg:col-span-5">
+            <TerminalVisual className="shadow-card-hover" />
+            <div className="mt-3 flex items-center justify-between font-mono text-[11px] text-muted-2">
+              <span>live · streaming output</span>
+              <span>updated continuously</span>
             </div>
           </div>
         </motion.div>
       </div>
     </section>
-  );
-}
-
-// Portrait mark — typographic monogram as the visual identity for the hero.
-// Renders an oversized "M" with editorial typography treatments: a
-// rising emerald accent, a thin baseline rail, and meta labels framing
-// the letterform like a museum placard.
-function PortraitMark() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-hairline bg-surface"
-      aria-label="Musfique Ahmed"
-    >
-      <div className="relative aspect-[5/3] w-full">
-        {/* Faint dot grid background — feels like an editorial layout proof */}
-        <div
-          className="absolute inset-0 opacity-[0.18]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(255,255,255,0.25) 1px, transparent 1px)",
-            backgroundSize: "14px 14px",
-          }}
-          aria-hidden
-        />
-
-        {/* Corner crop marks */}
-        <div className="absolute left-3 top-3 h-3 w-3 border-l border-t border-accent/60" />
-        <div className="absolute right-3 top-3 h-3 w-3 border-r border-t border-accent/60" />
-        <div className="absolute bottom-3 left-3 h-3 w-3 border-b border-l border-accent/60" />
-        <div className="absolute bottom-3 right-3 h-3 w-3 border-b border-r border-accent/60" />
-
-        {/* The monogram */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="font-display text-[clamp(7rem,18vw,12rem)] font-semibold leading-none tracking-[-0.06em] text-foreground"
-            aria-hidden
-          >
-            M<span className="text-accent-fg">.</span>
-          </span>
-        </div>
-
-        {/* Top-left meta */}
-        <div className="absolute left-5 top-5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
-          monogram · 01
-        </div>
-
-        {/* Bottom labels */}
-        <div className="absolute inset-x-5 bottom-4 flex items-end justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
-          <span className="flex items-center gap-2">
-            <span className="inline-block h-px w-6 bg-hairline" />
-            Musfique Ahmed
-          </span>
-          <span>Anik</span>
-        </div>
-      </div>
-    </motion.div>
   );
 }
