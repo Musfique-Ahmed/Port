@@ -325,63 +325,58 @@ export async function GitHubActivity() {
           <ProfileStrip profile={profile} />
         </FadeUp>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:gap-8">
-          <div className="lg:col-span-5">
-            <FadeUp>
-              <HeatmapBlock />
-            </FadeUp>
-          </div>
-
-          <div className="lg:col-span-7">
-            <Stagger>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {repos.length > 0 ? (
-                  repos.map((repo) => (
-                    <Item key={repo.id}>
-                      <FadeUp y={12}>
-                        <RepoCard repo={repo} />
-                      </FadeUp>
-                    </Item>
-                  ))
-                ) : (
-                  <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
-                      GitHub API rate-limited
-                    </div>
-                    <p className="max-w-sm text-sm text-muted-1">
-                      The unauthenticated GitHub API allows 60 requests/hour.
-                      Add a <code className="font-mono text-xs text-accent-fg">GITHUB_TOKEN</code> env
-                      var (a classic PAT with no scopes is enough) to lift this
-                      to 5,000/hour.
-                    </p>
-                    <a
-                      href="https://github.com/Musfique-Ahmed?tab=repositories"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-accent-fg underline-offset-4 hover:underline"
-                    >
-                      View all repositories on GitHub →
-                    </a>
-                  </div>
-                )}
-              </div>
-            </Stagger>
-          </div>
-        </div>
-
-        <FadeUp className="mt-10 flex items-center justify-center">
-          <Link
-            href="https://github.com/Musfique-Ahmed?tab=repositories"
-            target="_blank"
-            rel="noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-5 py-2.5 text-sm text-foreground transition-colors hover:border-white/20 hover:bg-surface-2"
-          >
-            <Github className="h-4 w-4 text-muted-1 transition-colors group-hover:text-white" />
-            Browse all repositories
-            <ExternalLink className="h-3.5 w-3.5 text-muted-2 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </Link>
+        <FadeUp className="mt-10">
+          <HeatmapBlock />
         </FadeUp>
+
+        <div className="mt-12">
+          <div className="mb-6 flex items-baseline justify-between">
+            <h3 className="font-mono text-xs uppercase tracking-[0.2em] text-muted-2">
+              Recent projects
+            </h3>
+            <a
+              href="https://github.com/Musfique-Ahmed?tab=repositories"
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-[11px] text-muted-2 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              Browse all →
+            </a>
+          </div>
+          <Stagger>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {repos.length > 0 ? (
+                repos.map((repo) => (
+                  <Item key={repo.id}>
+                    <FadeUp y={12}>
+                      <RepoCard repo={repo} />
+                    </FadeUp>
+                  </Item>
+                ))
+              ) : (
+                <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
+                    GitHub API rate-limited
+                  </div>
+                  <p className="max-w-sm text-sm text-muted-1">
+                    The unauthenticated GitHub API allows 60 requests/hour.
+                    Add a <code className="font-mono text-xs text-accent-fg">GITHUB_TOKEN</code> env
+                    var (a classic PAT with no scopes is enough) to lift this
+                    to 5,000/hour.
+                  </p>
+                  <a
+                    href="https://github.com/Musfique-Ahmed?tab=repositories"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent-fg underline-offset-4 hover:underline"
+                  >
+                    View all repositories on GitHub →
+                  </a>
+                </div>
+              )}
+            </div>
+          </Stagger>
+        </div>
       </div>
-    </section>
-  );
+    </section>  );
 }
