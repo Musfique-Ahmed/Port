@@ -125,13 +125,15 @@ export function aggregateCommitsByDay(
   return map;
 }
 
-// Try to fetch the per-day contribution counts by scraping GitHub's own
-// contribution SVG. This is more comprehensive than the Events API because
-// it includes ALL commits across ALL branches/repos in the user's network
-// of contributions, not just public PushEvents to default branches.
+// Try to fetch per-day contribution data by scraping GitHub's contribution
+// page. GitHub doesn't expose a stable JSON endpoint for the contribution
+// graph, but the contributions HTML embeds the per-day level buckets
+// (`data-level="0..4"`) which is what we need for the heatmap.
 //
-// Returns a Map<date-YYYY-MM-DD, count> or null if extraction failed.
-export async function scrapeContributionCounts(): Promise<Map<string, number> | null> {
+// Returns Map<date-YYYY-MM-DD, level 0..4> or null if parsing failed.
+// Also returns approximate "contributions" via a derived count heuristic
+// (the canonical yearly total is exposed separately; see scrapeYearTotal).
+export async function scrapeContributionLevels(): Promise<Map<string, number> | null> {
   try {
     const res = await fetch(`https://github.com/users/${USER}/contributions`, {
       headers: { Accept: "text/html" },
@@ -139,18 +141,41 @@ export async function scrapeContributionCounts(): Promise<Map<string, number> | 
     });
     if (!res.ok) return null;
     const html = await res.text();
-    // Match data-count="<n>" data-date="<YYYY-MM-DD>" pairs in the SVG.
-    const re = /data-count="(\d+)"\s+data-date="(\d{4}-\d{2}-\d{2})"/g;
+    const re = /data-level="([0-4])"[\s\S]*?data-date="(\d{4}-\d{2}-\d{2})"/g;
     const map = new Map<string, number>();
     let m: RegExpExecArray | null;
-    let any = false;
+    let found = 0;
     while ((m = re.exec(html)) !== null) {
-      const count = Number(m[1]);
+      const level = Number(m[1]);
       const date = m[2];
-      if (count > 0) any = true;
-      map.set(date, count);
+      map.set(date, level);
+      found++;
     }
-    return any ? map : null;
+    if (found < 50) return null;
+    return map;
+  } catch {
+    return null;
+  }
+}
+
+// Scrape the "X contributions in the last year" headline from the profile
+// contributions page. That number is GitHub's authoritative yearly total.
+export async function scrapeYearTotal(): Promise<{ total: number; activeDays: number } | null> {
+  try {
+    const res = await fetch(`https://github.com/users/${USER}/contributions`, {
+      headers: { Accept: "text/html" },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // Pattern: "<N> contributions in the last year"
+    const totalMatch = html.match(/(\d[\d,]*)\s+contributions?\s+in\s+the\s+last\s+year/i);
+    const total = totalMatch ? Number(totalMatch[1].replace(/,/g, "")) : 0;
+    // Pattern: "<N> active days" — exposed next to the level/days summary
+    const activeMatch = html.match(/(\d[\d,]*)\s+active\s+days?/i);
+    const activeDays = activeMatch ? Number(activeMatch[1].replace(/,/g, "")) : 0;
+    if (total === 0 && activeDays === 0) return null;
+    return { total, activeDays };
   } catch {
     return null;
   }

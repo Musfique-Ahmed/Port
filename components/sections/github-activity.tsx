@@ -1,11 +1,9 @@
 import {
   getRecentRepos,
-  getRecentEvents,
   getProfile,
-  aggregateCommitsByDay,
   buildHeatmapGrid,
-  totalCommits,
-  scrapeContributionCounts,
+  scrapeContributionLevels,
+  scrapeYearTotal,
   type GitHubRepo,
   type GitHubProfile,
 } from "@/lib/github";
@@ -99,14 +97,17 @@ function cn(...c: (string | false | undefined | null)[]) {
 async function HeatmapBlock() {
   // Prefer scraping the contribution SVG (more complete data), fall back to
   // the Events API aggregation, fall back to nothing.
-  let dayCounts = await scrapeContributionCounts();
-  if (!dayCounts) {
-    const events = await getRecentEvents(90);
-    dayCounts = aggregateCommitsByDay(events);
-  }
+  // Two data sources in parallel: (1) per-day levels from GitHub's
+  // contributions HTML, (2) the year-total + active-days headline.
+  const [levels, yearSummary] = await Promise.all([
+    scrapeContributionLevels(),
+    scrapeYearTotal(),
+  ]);
+  // Levels are 0..4 buckets; treat them as counts so buildHeatmapGrid's
+  // existing bucket math maps them back to the same 0..4 visual.
+  const dayCounts = levels ?? new Map<string, number>();
   const grid = buildHeatmapGrid(dayCounts, 12);
-  const total = totalCommits(dayCounts);
-  const hasActivity = total > 0;
+  const hasActivity = dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
   // Build month labels along the top axis.
   const monthLabels: { col: number; label: string }[] = [];
@@ -135,10 +136,13 @@ async function HeatmapBlock() {
         </div>
         <div className="text-right">
           <div className="font-mono text-[10px] uppercase tracking-wider text-muted-2">
-            Total events
+            Last year
           </div>
           <div className="text-2xl font-semibold tracking-tight text-white">
-            {total}
+            {yearSummary ? yearSummary.total.toLocaleString() : "—"}
+          </div>
+          <div className="mt-0.5 font-mono text-[10px] text-muted-2">
+            contributions
           </div>
         </div>
       </div>
@@ -193,8 +197,16 @@ async function HeatmapBlock() {
 
       {!hasActivity && (
         <p className="mt-4 rounded-lg border border-dashed border-hairline bg-surface-2 px-3 py-2 text-xs text-muted-1">
-          No public push events in the last 90 days — only private work, or
-          activity merged via PRs without direct pushes, would explain that.
+          Couldn't read the contributions graph right now. Visit{" "}
+          <a
+            href="https://github.com/Musfique-Ahmed"
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent-fg underline-offset-4 hover:underline"
+          >
+            the profile
+          </a>{" "}
+          directly.
         </p>
       )}
 
@@ -320,18 +332,24 @@ export async function GitHubActivity() {
                     </Item>
                   ))
                 ) : (
-                  <div className="col-span-full rounded-2xl border border-dashed border-hairline p-8 text-center text-sm text-muted-1">
-                    Couldn't reach GitHub right now. Try again in a moment, or
-                    visit{" "}
+                  <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
+                      GitHub API rate-limited
+                    </div>
+                    <p className="max-w-sm text-sm text-muted-1">
+                      The unauthenticated GitHub API allows 60 requests/hour.
+                      Add a <code className="font-mono text-xs text-accent-fg">GITHUB_TOKEN</code> env
+                      var (a classic PAT with no scopes is enough) to lift this
+                      to 5,000/hour.
+                    </p>
                     <a
-                      href="https://github.com/Musfique-Ahmed"
+                      href="https://github.com/Musfique-Ahmed?tab=repositories"
                       target="_blank"
                       rel="noreferrer"
                       className="text-accent-fg underline-offset-4 hover:underline"
                     >
-                      the profile
-                    </a>{" "}
-                    directly.
+                      View all repositories on GitHub →
+                    </a>
                   </div>
                 )}
               </div>
