@@ -94,6 +94,80 @@ export async function getRecentRepos(
   }
 }
 
+// Fetch the all-time commit count via GraphQL. Uses contributionsCollection
+// with a from/to range covering the user's entire account lifetime. Requires
+// a token. This matches the same source github-readme-stats uses when
+// it calls include_all_commits=true — i.e. counts every commit across
+// every repo the user has authored, including private ones the token
+// can see. Returns null on failure (no token, rate-limited, etc.).
+export async function fetchAllTimeCommits(): Promise<number | null> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return null;
+  try {
+    // window in years — GraphQL caps at ~10 years per request, so we
+    // fan out into chunks if the account is older than that. For accounts
+    // under 10 years (i.e. >99% of cases) a single call covers it.
+    const userRes = await fetch(`https://api.github.com/users/${USER}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      next: { revalidate: 3600 },
+    });
+    if (!userRes.ok) return null;
+    const profile = await userRes.json();
+    const createdAt: string | undefined = profile?.created_at;
+    if (!createdAt) return null;
+
+    const fromDate = new Date(createdAt);
+    const now = new Date();
+
+    // Fan out across ≤10-year windows; sum totals.
+    const WINDOW_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+    const windows: { from: string; to: string }[] = [];
+    let cursor = new Date(fromDate);
+    while (cursor.getTime() < now.getTime()) {
+      const next = new Date(Math.min(cursor.getTime() + WINDOW_MS, now.getTime()));
+      windows.push({
+        from: cursor.toISOString(),
+        to: next.toISOString(),
+      });
+      cursor = next;
+      // Avoid infinite loop if cursor doesn't advance.
+      if (cursor.getTime() <= fromDate.getTime() + 1000) break;
+    }
+
+    let total = 0;
+    for (const w of windows) {
+      const res = await fetch("https://api.github.com/graphql", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `query {
+            user(login: "${USER}") {
+              contributionsCollection(from: "${w.from}", to: "${w.to}") {
+                contributionCalendar { totalContributions }
+              }
+            }
+          }`,
+        }),
+        next: { revalidate: 3600 },
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      const t = json?.data?.user?.contributionsCollection?.contributionCalendar?.totalContributions;
+      if (typeof t === "number") total += t;
+    }
+    return total > 0 ? total : null;
+  } catch {
+    return null;
+  }
+}
+
 // Fetch ALL public repos owned by the user (no limit). Used for
 // star-count aggregation. Returns up to 100 per page; if the user
 // has more, we'd need pagination.

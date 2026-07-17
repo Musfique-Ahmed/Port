@@ -4,15 +4,16 @@ import {
   buildHeatmapGrid,
   fetchContributionGraphQL,
   fetchContributionCountsViaApi,
+  fetchAllTimeCommits,
   countsToLevels,
   scrapeContributionLevels,
+  totalCommits,
   type GitHubRepo,
   type GitHubProfile,
 } from "@/lib/github";
-import { getAllReadmeStats } from "@/lib/readme-stats";
 import { FadeUp, Stagger, Item } from "@/components/motion/reveal";
 import { SectionHeader } from "./section-header";
-import { Github, Star, GitFork, ExternalLink, Calendar, Hash } from "lucide-react";
+import { Github, Star, GitFork, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 // Force this section to render at request time with 1-hour revalidation.
@@ -66,14 +67,14 @@ function HeatmapGrid({
   grid: ReturnType<typeof buildHeatmapGrid>;
 }) {
   return (
-    <div className="flex gap-[3px]">
+    <div className="flex w-full gap-[3px]">
       {grid.map((col, i) => (
-        <div key={i} className="flex flex-col gap-[3px]">
+        <div key={i} className="flex min-w-0 flex-1 flex-col gap-[3px]">
           {col.map((cell) => (
             <div
               key={cell.date}
               title={`${cell.date} · ${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-              className="h-[11px] w-[11px] rounded-sm transition-colors"
+              className="aspect-square w-full rounded-sm transition-colors"
               style={{ backgroundColor: HEATMAP_LEVEL_BG[cell.level] }}
             />
           ))}
@@ -93,10 +94,6 @@ const HEATMAP_LEVEL_BG: Record<0 | 1 | 2 | 3 | 4, string> = {
   3: "#2EA043", // bright green
   4: "#39D353", // vivid green (most active)
 };
-
-function cn(...c: (string | false | undefined | null)[]) {
-  return c.filter(Boolean).join(" ");
-}
 
 async function HeatmapBlock() {
   // Prefer scraping the contribution SVG (more complete data), fall back to
@@ -128,14 +125,19 @@ async function HeatmapBlock() {
   const hasActivity =
     dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
-  // Build month labels along the top axis.
-  const monthLabels: { col: number; label: string }[] = [];
+  // Build month labels along the top axis — one entry per column,
+  // with `firstInMonth` flagging the first column of each new month
+  // so only that one prints the label and the rest are blank (used as
+  // flex spacers that line up with the heatmap columns below).
+  const monthLabels: { col: number; label: string; firstInMonth: boolean }[] = [];
   let lastMonth = "";
   grid.forEach((col, i) => {
     const m = new Date(col[0].date).toLocaleString("en-US", { month: "short" });
     if (m !== lastMonth) {
-      monthLabels.push({ col: i, label: m });
+      monthLabels.push({ col: i, label: m, firstInMonth: true });
       lastMonth = m;
+    } else {
+      monthLabels.push({ col: i, label: m, firstInMonth: false });
     }
   });
 
@@ -166,23 +168,25 @@ async function HeatmapBlock() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <div className="min-w-fit">
-          {/* Month labels */}
-          <div className="relative mb-2 ml-9 h-3 text-[10px] font-mono uppercase tracking-wider text-muted-2">
-            {monthLabels.map((m) => (
-              <span
-                key={m.col}
-                className="absolute"
-                style={{ left: `${m.col * 14}px` }}
+      <div className="mt-6">
+        <div>
+          {/* Month labels: rendered as a flex row of equal-width columns
+              matching the heatmap below. Each column header spans its
+              week column; if multiple weeks belong to the same month,
+              only the first prints the label. */}
+          <div className="mb-2 ml-9 flex items-end">
+            {monthLabels.map((m, i) => (
+              <div
+                key={i}
+                className="flex-1 text-[10px] font-mono uppercase tracking-wider text-muted-2"
               >
-                {m.label}
-              </span>
+                {m.firstInMonth ? m.label : "\u00a0"}
+              </div>
             ))}
           </div>
           <div className="flex gap-3">
             {/* Day labels */}
-            <div className="flex flex-col gap-[3px] pt-[1px] font-mono text-[10px] uppercase text-muted-2">
+            <div className="flex shrink-0 flex-col gap-[3px] pt-[1px] font-mono text-[10px] uppercase text-muted-2">
               <span className="h-[11px]">Mon</span>
               <span className="h-[11px]" />
               <span className="h-[11px]">Wed</span>
@@ -241,23 +245,44 @@ async function HeatmapBlock() {
   );
 }
 
-async function ProfileStrip({ profile }: { profile: GitHubProfile | null }) {
+function ProfileStrip({
+  profile,
+  totalCommitsCount,
+}: {
+  profile: GitHubProfile | null;
+  totalCommitsCount: number | null;
+}) {
   if (!profile) return null;
   const since = new Date(profile.created_at).getFullYear();
+
+  // Three tiles, populated entirely from the live getProfile() response
+  // (refreshes hourly via Next route revalidation) plus the GraphQL
+  // all-time-commits pipeline (totalCommitsCount).
+  const tiles: { label: string; value: string }[] = [
+    { label: "On GitHub since", value: String(since) },
+    { label: "Public repos", value: profile.public_repos.toLocaleString() },
+    { label: "Followers", value: profile.followers.toLocaleString() },
+    {
+      label: "Total commits",
+      value: totalCommitsCount !== null ? totalCommitsCount.toLocaleString() : "—",
+    },
+  ];
+
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-2">
-      <span className="flex items-center gap-2">
-        <Calendar className="h-3.5 w-3.5" />
-        On GitHub since {since}
-      </span>
-      <span className="flex items-center gap-2">
-        <Hash className="h-3.5 w-3.5" />
-        {profile.public_repos} public repos
-      </span>
-      <span className="flex items-center gap-2">
-        <Github className="h-3.5 w-3.5" />
-        {profile.followers} followers · {profile.following} following
-      </span>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {tiles.map((t) => (
+        <div
+          key={t.label}
+          className="rounded-2xl border border-hairline bg-surface px-4 py-3"
+        >
+          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
+            {t.label}
+          </div>
+          <div className="mt-1 text-xl font-semibold tracking-tight text-white">
+            {t.value}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -309,11 +334,26 @@ function RepoCard({ repo }: { repo: GitHubRepo }) {
 
 export async function GitHubActivity() {
   // Server component fetches in parallel.
-  const [profile, repos, readmeStats] = await Promise.all([
-    getProfile(),
-    getRecentRepos(6),
-    getAllReadmeStats(),
-  ]);
+  const [profile, repos, graph, statsCounts, scraped, allTimeCommits] =
+    await Promise.all([
+      getProfile(),
+      getRecentRepos(6),
+      fetchContributionGraphQL(),
+      fetchContributionCountsViaApi(),
+      scrapeContributionLevels(),
+      fetchAllTimeCommits(),
+    ]);
+
+  // Total commits across the user's full GitHub lifetime. Source
+  // priority: GraphQL all-time window (canonical, matches
+  // github-readme-stats include_all_commits=true) → 12-month GraphQL
+  // total → Stats API aggregation → null. The heatmap above uses the
+  // 12-month number (412) — the strip below uses the all-time number
+  // (1.6k).
+  const totalCommitsCount =
+    allTimeCommits ??
+    graph?.totalContributions ??
+    (statsCounts ? totalCommits(statsCounts) : null);
 
   return (
     <section className="relative py-24 md:py-32">
@@ -321,41 +361,24 @@ export async function GitHubActivity() {
         <FadeUp>
           <SectionHeader
             eyebrow="Open source"
-            title="Public work, in public."
-            description="Repos I actually own and ship. Pulled live from GitHub — refreshes every hour."
+            title="GitHub Activity"
+            description="A snapshot of my open-source contributions, coding consistency, and development activity."
           />
         </FadeUp>
 
-        {/* GitHub Statistics cards — sourced from the github-readme-stats
-            vercel service via server fetch (1h cache). */}
-        <FadeUp delay={0.05} className="mt-10">
-          <div className="grid gap-4 md:grid-cols-2">
-            <ReadmeStatCard
-              label="GitHub Stats"
-              svg={readmeStats.stats}
-              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
-            />
-            <ReadmeStatCard
-              label="GitHub Streak"
-              svg={readmeStats.streak}
-              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
-            />
-          </div>
-          <div className="mt-4">
-            <ReadmeStatCard
-              label="Top Languages"
-              svg={readmeStats.topLangs}
-              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
-              compact
-            />
-          </div>
-        </FadeUp>
-
-        <FadeUp delay={0.05} className="mt-10">
-          <ProfileStrip profile={profile} />
-        </FadeUp>
-
+        {/* Live stats — pulled from the GitHub Profile API (refreshes
+            hourly via route revalidation). The numbers update
+            automatically whenever getProfile() returns new data. */}
         <FadeUp className="mt-10">
+          <ProfileStrip
+            profile={profile}
+            totalCommitsCount={totalCommitsCount}
+          />
+        </FadeUp>
+
+        {/* Contribution heatmap — server-rendered from canonical GitHub
+            data (GraphQL when a token is present, else HTML scrape). */}
+        <FadeUp className="mt-6">
           <HeatmapBlock />
         </FadeUp>
 
@@ -408,62 +431,6 @@ export async function GitHubActivity() {
           </Stagger>
         </div>
       </div>
-    </section>  );
-}
-
-// Card wrapping a stats SVG fetched from the github-readme-stats
-// vercel service. Renders inline so the SVG inherits container sizing
-// and uses our own card chrome around it.
-function ReadmeStatCard({
-  label,
-  svg,
-  href,
-  compact,
-}: {
-  label: string;
-  svg: string | null;
-  href: string;
-  compact?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="group relative block overflow-hidden rounded-2xl border border-hairline bg-surface transition-colors hover:border-white/15"
-    >
-      <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
-          {label}
-        </span>
-        <ExternalLink className="h-3.5 w-3.5 text-muted-2 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
-      </div>
-      <div
-        className={cn(
-          "flex items-center justify-center",
-          compact ? "p-3" : "min-h-[220px] p-4"
-        )}
-      >
-        {svg ? (
-          <div
-            className="w-full [&_svg]:!h-auto [&_svg]:!w-full [&_svg]:max-w-full"
-            // The github-readme-stats SVGs are static, server-controlled.
-            // We trust the upstream service; the content is the user's
-            // own public GitHub data.
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
-              Couldn't reach readme-stats
-            </span>
-            <p className="max-w-xs text-xs text-muted-1">
-              The upstream service is rate-limiting or down. Card will refresh on
-              next visit.
-            </p>
-          </div>
-        )}
-      </div>
-    </a>
+    </section>
   );
 }
