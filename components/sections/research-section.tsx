@@ -26,8 +26,8 @@ export const papers: Paper[] = [
       "We introduce BanglishHate, a labeled corpus and evaluation protocol for hate speech detection in code-mixed Bangla-English text. The benchmark ships with author-disjoint splits, calibrated baselines spanning classical and transformer families, and an error analysis targeted at ambiguous transliterated samples. We report macro-F1 across five baselines and discuss failure modes common to off-the-shelf multilingual models on this domain.",
     citation:
       "M. Ahmed, et al. 'BanglishHate: A Reproducible Benchmark for Hate Speech Detection in Code-Mixed Bangla-English.' IEEE Conf., 2025.",
-    doi: "10.0000/PLACEHOLDER",
-    link: "https://doi.org/10.0000/PLACEHOLDER",
+    doi: "11022100",
+    link: "https://ieeexplore.ieee.org/document/11022100",
     tags: ["NLP", "Benchmark", "Code-mixed", "Reproducibility"],
   },
 ];

@@ -12,7 +12,8 @@ export const site = {
     scholar: "https://scholar.google.com/citations?user=musfique",
     twitter: "https://twitter.com/musfique",
   },
-  resumeUrl: "/resume.pdf",
+  resumeUrl:
+    "https://drive.google.com/file/d/1bD7Kn-yR6dHsU51TPCXcq6HTK-6d3iAn/view?usp=sharing",
   description:
     "AI Engineer, Data Scientist, and Researcher building production ML systems, publishing peer-reviewed work, and leading developer communities.",
   url: "https://musfique-ahmed.github.io/portfolio/",

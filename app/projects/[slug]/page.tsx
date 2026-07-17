@@ -190,7 +190,7 @@ export default async function ProjectDetail({
                   <TrafficArchitecture />
                 ) : project.slug === "banglish-hate-speech-benchmark" ? (
                   <BanglishArchitecture />
-                ) : project.slug === "fullstack-ecommerce" ? (
+                ) : project.slug === "boutiqo-bangladesh" ? (
                   <EcommerceArchitecture />
                 ) : project.slug === "my-safety-app" ? (
                   <SafetyArchitecture />

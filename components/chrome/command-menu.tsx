@@ -61,8 +61,8 @@ const PROJECTS: Item[] = [
     keywords: ["nlp", "benchmark"],
   },
   {
-    label: "Full-Stack E-commerce",
-    href: "/projects/fullstack-ecommerce",
+    label: "Boutiqo Bangladesh",
+    href: "/projects/boutiqo-bangladesh",
     Icon: FolderGit2,
     group: "Projects",
   },

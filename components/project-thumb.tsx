@@ -284,7 +284,7 @@ function Airline() {
 const RENDERERS: Record<string, () => React.JSX.Element> = {
   "ai-traffic-violation-detection": Traffic,
   "banglish-hate-speech-benchmark": Banglish,
-  "fullstack-ecommerce": Ecommerce,
+  "boutiqo-bangladesh": Ecommerce,
   "my-safety-app": Safety,
   vizball: Vizball,
   "airline-customer-satisfaction": Airline,
