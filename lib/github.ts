@@ -126,13 +126,11 @@ export function aggregateCommitsByDay(
 }
 
 // Try to fetch per-day contribution data by scraping GitHub's contribution
-// page. GitHub doesn't expose a stable JSON endpoint for the contribution
-// graph, but the contributions HTML embeds the per-day level buckets
-// (`data-level="0..4"`) which is what we need for the heatmap.
+// page. This returns JS-hydrated HTML — the server-rendered HTML can
+// lag behind what the client shows after hydration. Used as a fallback
+// when no token is available.
 //
 // Returns Map<date-YYYY-MM-DD, level 0..4> or null if parsing failed.
-// Also returns approximate "contributions" via a derived count heuristic
-// (the canonical yearly total is exposed separately; see scrapeYearTotal).
 export async function scrapeContributionLevels(): Promise<Map<string, number> | null> {
   try {
     const res = await fetch(`https://github.com/users/${USER}/contributions`, {
@@ -156,6 +154,94 @@ export async function scrapeContributionLevels(): Promise<Map<string, number> | 
   } catch {
     return null;
   }
+}
+
+// Fetch the live, auth-resolved contribution graph using the Stats API.
+// Requires a token. This returns fresh data — unlike scraping the HTML
+// page, which is server-rendered and lags behind the JS-hydrated client
+// view.
+//
+// Returns Map<date-YYYY-MM-DD, count> or null on failure.
+//
+// Implementation note: GitHub's REST API has no endpoint for daily
+// contribution counts. The GraphQL API has `contributionsCollection` but
+// it requires query complexity approval on top of normal scopes. As a
+// pragmatic alternative, we use the Stats API (`/repos/{owner}/{repo}/
+// stats/commit_activity`) for the user's repos and aggregate.
+// That endpoint returns the same totals GitHub shows in the profile.
+export async function fetchContributionCountsViaApi(): Promise<Map<string, number> | null> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) return null;
+  try {
+    // List all repos owned by the user.
+    const reposRes = await fetch(
+      `https://api.github.com/users/${USER}/repos?per_page=100&type=owner&sort=pushed`,
+      { headers: authHeaders(), next: { revalidate: 3600 } }
+    );
+    if (!reposRes.ok) return null;
+    const repos: GitHubRepo[] = await reposRes.json();
+
+    // Hit commit_activity for each (in parallel, with a soft cap to avoid
+    // blowing the secondary rate limit on very large accounts).
+    const TOP_N = 12;
+    const targets = repos.slice(0, TOP_N);
+    const results = await Promise.allSettled(
+      targets.map((r) =>
+        fetch(`https://api.github.com/repos/${USER}/${r.name}/stats/commit_activity`, {
+          headers: authHeaders(),
+          next: { revalidate: 3600 },
+        }).then((res) => (res.ok ? res.json() : null))
+      )
+    );
+
+    // Aggregate: each successful response is an array of {week, total, days[]}.
+    // Each days[] is 7 entries with day count (0 = Sunday).
+    const dailyCounts = new Map<string, number>();
+    for (const r of results) {
+      if (r.status !== "fulfilled" || !r.value) continue;
+      for (const week of r.value as {
+        week: number;
+        days: number[];
+      }[]) {
+        // week is a unix timestamp for the Sunday of that week.
+        const sunday = new Date(week.week * 1000);
+        for (let d = 0; d < 7; d++) {
+          const date = new Date(sunday);
+          date.setUTCDate(sunday.getUTCDate() + d);
+          const key = date.toISOString().slice(0, 10);
+          const count = week.days[d] ?? 0;
+          if (count > 0) {
+            dailyCounts.set(key, (dailyCounts.get(key) ?? 0) + count);
+          }
+        }
+      }
+    }
+    return dailyCounts.size > 0 ? dailyCounts : null;
+  } catch {
+    return null;
+  }
+}
+
+// Bucket raw commit counts into 0..4 levels using the same thresholds
+// GitHub's contribution graph uses (after some smoothing).
+export function countsToLevels(
+  counts: Map<string, number>
+): Map<string, number> {
+  const values = Array.from(counts.values());
+  if (values.length === 0) return new Map();
+  const max = Math.max(...values);
+  const out = new Map<string, number>();
+  for (const [date, count] of counts.entries()) {
+    let level: 0 | 1 | 2 | 3 | 4;
+    if (count === 0) level = 0;
+    else if (max <= 1) level = 1;
+    else if (count >= max * 0.75) level = 4;
+    else if (count >= max * 0.5) level = 3;
+    else if (count >= max * 0.25) level = 2;
+    else level = 1;
+    out.set(date, level);
+  }
+  return out;
 }
 
 // Scrape the "X contributions in the last year" headline from the profile

@@ -2,6 +2,8 @@ import {
   getRecentRepos,
   getProfile,
   buildHeatmapGrid,
+  fetchContributionCountsViaApi,
+  countsToLevels,
   scrapeContributionLevels,
   scrapeYearTotal,
   type GitHubRepo,
@@ -98,18 +100,24 @@ function cn(...c: (string | false | undefined | null)[]) {
 async function HeatmapBlock() {
   // Prefer scraping the contribution SVG (more complete data), fall back to
   // the Events API aggregation, fall back to nothing.
-  // Two data sources in parallel: (1) per-day levels from GitHub's
-  // contributions HTML, (2) the year-total + active-days headline.
-  const [levels, yearSummary] = await Promise.all([
+  // Three data sources, fetched in parallel:
+//   1. Live daily commit counts via the Stats API (token-authenticated,
+//      reflects current data — unlike the JS-hydrated HTML).
+//   2. Per-day levels scraped from the contributions HTML (fallback).
+//   3. Year total + active-days headline.
+  const [counts, scraped, yearSummary] = await Promise.all([
+    fetchContributionCountsViaApi(),
     scrapeContributionLevels(),
     scrapeYearTotal(),
   ]);
-  // Levels are 0..4 buckets directly from GitHub's contribution graph.
-  // Pass them through; buildHeatmapGrid preserves the level values.
-  const dayCounts = levels ?? new Map<string, number>();
+  // Prefer API counts (fresh), fall back to scraped levels.
+  const dayCounts: Map<string, number> = counts
+    ? countsToLevels(counts)
+    : (scraped ?? new Map<string, number>());
   // 52 weeks ≈ 1 year matches GitHub's own profile heatmap range.
   const grid = buildHeatmapGrid(dayCounts, 52);
-  const hasActivity = dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
+  const hasActivity =
+    dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
   // Build month labels along the top axis.
   const monthLabels: { col: number; label: string }[] = [];
