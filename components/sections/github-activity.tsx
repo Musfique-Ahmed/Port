@@ -9,6 +9,7 @@ import {
   type GitHubRepo,
   type GitHubProfile,
 } from "@/lib/github";
+import { getAllReadmeStats } from "@/lib/readme-stats";
 import { FadeUp, Stagger, Item } from "@/components/motion/reveal";
 import { SectionHeader } from "./section-header";
 import { Github, Star, GitFork, ExternalLink, Calendar, Hash } from "lucide-react";
@@ -308,7 +309,11 @@ function RepoCard({ repo }: { repo: GitHubRepo }) {
 
 export async function GitHubActivity() {
   // Server component fetches in parallel.
-  const [profile, repos] = await Promise.all([getProfile(), getRecentRepos(6)]);
+  const [profile, repos, readmeStats] = await Promise.all([
+    getProfile(),
+    getRecentRepos(6),
+    getAllReadmeStats(),
+  ]);
 
   return (
     <section className="relative py-24 md:py-32">
@@ -319,6 +324,31 @@ export async function GitHubActivity() {
             title="Public work, in public."
             description="Repos I actually own and ship. Pulled live from GitHub — refreshes every hour."
           />
+        </FadeUp>
+
+        {/* GitHub Statistics cards — sourced from the github-readme-stats
+            vercel service via server fetch (1h cache). */}
+        <FadeUp delay={0.05} className="mt-10">
+          <div className="grid gap-4 md:grid-cols-2">
+            <ReadmeStatCard
+              label="GitHub Stats"
+              svg={readmeStats.stats}
+              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
+            />
+            <ReadmeStatCard
+              label="GitHub Streak"
+              svg={readmeStats.streak}
+              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
+            />
+          </div>
+          <div className="mt-4">
+            <ReadmeStatCard
+              label="Top Languages"
+              svg={readmeStats.topLangs}
+              href={`https://github.com/${profile?.login ?? "Musfique-Ahmed"}`}
+              compact
+            />
+          </div>
         </FadeUp>
 
         <FadeUp delay={0.05} className="mt-10">
@@ -379,4 +409,61 @@ export async function GitHubActivity() {
         </div>
       </div>
     </section>  );
+}
+
+// Card wrapping a stats SVG fetched from the github-readme-stats
+// vercel service. Renders inline so the SVG inherits container sizing
+// and uses our own card chrome around it.
+function ReadmeStatCard({
+  label,
+  svg,
+  href,
+  compact,
+}: {
+  label: string;
+  svg: string | null;
+  href: string;
+  compact?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group relative block overflow-hidden rounded-2xl border border-hairline bg-surface transition-colors hover:border-white/15"
+    >
+      <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
+          {label}
+        </span>
+        <ExternalLink className="h-3.5 w-3.5 text-muted-2 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
+      </div>
+      <div
+        className={cn(
+          "flex items-center justify-center",
+          compact ? "p-3" : "min-h-[220px] p-4"
+        )}
+      >
+        {svg ? (
+          <div
+            className="w-full [&_svg]:!h-auto [&_svg]:!w-full [&_svg]:max-w-full"
+            // The github-readme-stats SVGs are static, server-controlled.
+            // We trust the upstream service; the content is the user's
+            // own public GitHub data.
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-2">
+              Couldn't reach readme-stats
+            </span>
+            <p className="max-w-xs text-xs text-muted-1">
+              The upstream service is rate-limiting or down. Card will refresh on
+              next visit.
+            </p>
+          </div>
+        )}
+      </div>
+    </a>
+  );
 }

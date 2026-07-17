@@ -1,5 +1,4 @@
 import { Hero } from "@/components/sections/hero";
-import { GitHubStats } from "@/components/sections/github-stats";
 import { MetricsRow } from "@/components/sections/metrics-row";
 import { AboutTimeline } from "@/components/sections/about-timeline";
 import { SkillGrid } from "@/components/sections/skill-grid";
@@ -13,7 +12,6 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <GitHubStats />
       <MetricsRow />
       <AboutTimeline />
       <SkillGrid />
