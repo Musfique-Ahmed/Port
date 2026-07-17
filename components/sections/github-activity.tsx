@@ -5,6 +5,7 @@ import {
   aggregateCommitsByDay,
   buildHeatmapGrid,
   totalCommits,
+  scrapeContributionCounts,
   type GitHubRepo,
   type GitHubProfile,
 } from "@/lib/github";
@@ -96,10 +97,16 @@ function cn(...c: (string | false | undefined | null)[]) {
 }
 
 async function HeatmapBlock() {
-  const events = await getRecentEvents(90);
-  const dayCounts = aggregateCommitsByDay(events);
+  // Prefer scraping the contribution SVG (more complete data), fall back to
+  // the Events API aggregation, fall back to nothing.
+  let dayCounts = await scrapeContributionCounts();
+  if (!dayCounts) {
+    const events = await getRecentEvents(90);
+    dayCounts = aggregateCommitsByDay(events);
+  }
   const grid = buildHeatmapGrid(dayCounts, 12);
   const total = totalCommits(dayCounts);
+  const hasActivity = total > 0;
 
   // Build month labels along the top axis.
   const monthLabels: { col: number; label: string }[] = [];
@@ -183,6 +190,13 @@ async function HeatmapBlock() {
           </div>
         </div>
       </div>
+
+      {!hasActivity && (
+        <p className="mt-4 rounded-lg border border-dashed border-hairline bg-surface-2 px-3 py-2 text-xs text-muted-1">
+          No public push events in the last 90 days — only private work, or
+          activity merged via PRs without direct pushes, would explain that.
+        </p>
+      )}
 
       <div className="mt-5 flex items-center justify-between border-t border-hairline pt-4">
         <p className="text-xs text-muted-1">

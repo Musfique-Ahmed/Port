@@ -1,5 +1,9 @@
 // Server-side fetcher for GitHub public data. Cached for 1 hour by route
 // revalidation (see /components/sections/github-activity.tsx).
+//
+// To raise the rate limit from 60/hr (unauthenticated, shared-IP-prone) to
+// 5,000/hr, set GITHUB_TOKEN in your environment. A classic PAT with no scopes
+// is sufficient — we're only reading public data.
 
 export type GitHubRepo = {
   id: number;
@@ -43,15 +47,20 @@ export type GitHubEvent = {
 };
 
 const USER = "Musfique-Ahmed";
-const HEADERS = {
+const HEADERS: HeadersInit = {
   Accept: "application/vnd.github+json",
   "X-GitHub-Api-Version": "2022-11-28",
 };
+// Add auth header at request time if a token is available.
+function authHeaders(): HeadersInit {
+  const token = process.env.GITHUB_TOKEN;
+  return token ? { ...HEADERS, Authorization: `Bearer ${token}` } : HEADERS;
+}
 
 export async function getProfile(): Promise<GitHubProfile | null> {
   try {
     const res = await fetch(`https://api.github.com/users/${USER}`, {
-      headers: HEADERS,
+      headers: authHeaders(),
       next: { revalidate: 3600 },
     });
     if (!res.ok) return null;
@@ -70,7 +79,7 @@ export async function getRecentRepos(
     const res = await fetch(
       `https://api.github.com/users/${USER}/repos?per_page=24&sort=pushed&direction=desc&type=owner`,
       {
-        headers: HEADERS,
+        headers: authHeaders(),
         next: { revalidate: 3600 },
       }
     );
@@ -90,7 +99,7 @@ export async function getRecentEvents(limit = 12): Promise<GitHubEvent[]> {
     const res = await fetch(
       `https://api.github.com/users/${USER}/events/public?per_page=${limit}`,
       {
-        headers: HEADERS,
+        headers: authHeaders(),
         next: { revalidate: 3600 },
       }
     );
@@ -114,6 +123,37 @@ export function aggregateCommitsByDay(
     map.set(date, (map.get(date) ?? 0) + commits.length);
   }
   return map;
+}
+
+// Try to fetch the per-day contribution counts by scraping GitHub's own
+// contribution SVG. This is more comprehensive than the Events API because
+// it includes ALL commits across ALL branches/repos in the user's network
+// of contributions, not just public PushEvents to default branches.
+//
+// Returns a Map<date-YYYY-MM-DD, count> or null if extraction failed.
+export async function scrapeContributionCounts(): Promise<Map<string, number> | null> {
+  try {
+    const res = await fetch(`https://github.com/users/${USER}/contributions`, {
+      headers: { Accept: "text/html" },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // Match data-count="<n>" data-date="<YYYY-MM-DD>" pairs in the SVG.
+    const re = /data-count="(\d+)"\s+data-date="(\d{4}-\d{2}-\d{2})"/g;
+    const map = new Map<string, number>();
+    let m: RegExpExecArray | null;
+    let any = false;
+    while ((m = re.exec(html)) !== null) {
+      const count = Number(m[1]);
+      const date = m[2];
+      if (count > 0) any = true;
+      map.set(date, count);
+    }
+    return any ? map : null;
+  } catch {
+    return null;
+  }
 }
 
 // Build a 12-week x 7-day grid ending today.
