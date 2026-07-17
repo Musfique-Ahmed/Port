@@ -122,9 +122,12 @@ export function Hero() {
                     target="_blank"
                     rel="noreferrer"
                     aria-label="GitHub"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-surface text-muted-1 transition-colors hover:text-foreground"
+                    className="inline-flex h-11 items-center gap-2 rounded-full border border-hairline bg-surface px-4 text-muted-1 transition-colors hover:text-foreground"
                   >
                     <Github className="h-[18px] w-[18px]" />
+                    <span className="hidden font-mono text-xs sm:inline">
+                      @Musfique-Ahmed
+                    </span>
                   </a>
                 </Magnetic>
                 <Magnetic strength={0.4}>

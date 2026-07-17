@@ -1,0 +1,165 @@
+// Server-side fetcher for GitHub public data. Cached for 1 hour by route
+// revalidation (see /components/sections/github-activity.tsx).
+
+export type GitHubRepo = {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  archived: boolean;
+  fork: boolean;
+  topics?: string[];
+  pushed_at: string;
+  updated_at: string;
+  homepage?: string | null;
+};
+
+export type GitHubProfile = {
+  login: string;
+  name: string | null;
+  bio: string | null;
+  avatar_url: string;
+  html_url: string;
+  public_repos: number;
+  followers: number;
+  following: number;
+  created_at: string;
+};
+
+export type GitHubEvent = {
+  id: string;
+  type: string;
+  repo: { id: number; name: string; url: string };
+  created_at: string;
+  payload: {
+    commits?: { sha: string; message: string }[];
+    ref?: string;
+    action?: string;
+  };
+};
+
+const USER = "Musfique-Ahmed";
+const HEADERS = {
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+};
+
+export async function getProfile(): Promise<GitHubProfile | null> {
+  try {
+    const res = await fetch(`https://api.github.com/users/${USER}`, {
+      headers: HEADERS,
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function getRecentRepos(
+  limit = 6,
+  options: { excludeForks?: boolean; excludeArchived?: boolean } = {}
+): Promise<GitHubRepo[]> {
+  const { excludeForks = true, excludeArchived = true } = options;
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${USER}/repos?per_page=24&sort=pushed&direction=desc&type=owner`,
+      {
+        headers: HEADERS,
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!res.ok) return [];
+    const all: GitHubRepo[] = await res.json();
+    return all
+      .filter((r) => (!excludeForks || !r.fork) && (!excludeArchived || !r.archived))
+      .sort((a, b) => b.stargazers_count - a.stargazers_count)
+      .slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+export async function getRecentEvents(limit = 12): Promise<GitHubEvent[]> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${USER}/events/public?per_page=${limit}`,
+      {
+        headers: HEADERS,
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+// Aggregate PushEvent commits into a per-day heatmap for the last 12 weeks.
+// Returns Map<date-YYYY-MM-DD, count>.
+export function aggregateCommitsByDay(
+  events: GitHubEvent[]
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const e of events) {
+    if (e.type !== "PushEvent") continue;
+    const commits = e.payload.commits ?? [];
+    const date = e.created_at.slice(0, 10);
+    map.set(date, (map.get(date) ?? 0) + commits.length);
+  }
+  return map;
+}
+
+// Build a 12-week x 7-day grid ending today.
+export function buildHeatmapGrid(
+  dayCounts: Map<string, number>,
+  weeks = 12
+): { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[][] {
+  const grid: { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[][] = [];
+  const today = new Date();
+  // Find Sunday of the current week
+  const dow = today.getUTCDay();
+  const endSunday = new Date(today);
+  endSunday.setUTCDate(today.getUTCDate() + (6 - dow));
+  // Start from (weeks-1) weeks before
+  const startSunday = new Date(endSunday);
+  startSunday.setUTCDate(endSunday.getUTCDate() - (weeks - 1) * 7);
+
+  // Determine thresholds for level classification
+  const counts = Array.from(dayCounts.values());
+  const max = counts.length ? Math.max(...counts) : 0;
+  const bucket = (n: number): 0 | 1 | 2 | 3 | 4 => {
+    if (n === 0) return 0;
+    if (max <= 1) return n > 0 ? 2 : 0;
+    const r = n / max;
+    if (r > 0.75) return 4;
+    if (r > 0.5) return 3;
+    if (r > 0.25) return 2;
+    return 1;
+  };
+
+  for (let w = 0; w < weeks; w++) {
+    const col: { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[] = [];
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(startSunday);
+      date.setUTCDate(startSunday.getUTCDate() + w * 7 + d);
+      const key = date.toISOString().slice(0, 10);
+      const count = dayCounts.get(key) ?? 0;
+      col.push({ date: key, count, level: bucket(count) });
+    }
+    grid.push(col);
+  }
+  return grid;
+}
+
+export function totalCommits(dayCounts: Map<string, number>): number {
+  let n = 0;
+  for (const v of dayCounts.values()) n += v;
+  return n;
+}
