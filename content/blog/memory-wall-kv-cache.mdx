@@ -1,12 +1,15 @@
 ---
 title: "The Memory Wall is Crumbling: Infinite Context Compression"
 description: "Breaking down QJL, PolarQuant, and TurboQuant — mathematical techniques that compress KV Cache by ~80% without sacrificing intelligence, approaching Shannon limits."
-date: "2026-03-30"
+date: "2025-04-22"
 category: "Research"
 tags: ["AI Systems", "Compression", "Mathematics"]
+draft: false
 ---
 
 As Large Language Models (LLMs) evolve, their "intelligence" is increasingly defined by the context window — the ability to maintain a coherent thread of thought across documents spanning hundreds of thousands of tokens. However, as we scale toward million-token horizons, we have collided with a physical limit: the **Memory Wall**.
+
+![KV Cache memory architecture showing the HBM-to-compute bottleneck that defines the memory wall](/blog/memory-wall-kv-cache/1.png)
 
 Contrary to popular belief, GPUs are not running out of memory because of the model weights; they are suffocating under the weight of the **KV Cache** — the mathematical representations (keys and values) of every previous word stored to avoid redundant computation.
 
@@ -31,6 +34,8 @@ Standard AI memory storage uses Cartesian coordinates — the traditional grid o
 Using a recursive polar transformation, PolarQuant breaks a d-dimensional vector into a hierarchy of dimensions (Level 1, Level 2, up to log₂d). At each level, dimensions are halved (d/2, d/4, …), eventually producing a single final radius and a series of angle vectors.
 
 This is mathematically elegant because, in high-dimensional AI embeddings, the "direction" (the angle) carries the essential semantic information, while the exact "position" (the radius) is less critical for attention accuracy. After preconditioning, these angles concentrate predictably around π/4. By focusing bit-allocation on these concentrated angles, PolarQuant achieves a near-perfect score of 0.995+ on the "Needle-In-A-Haystack" test using Llama-3.1-8B-Instruct.
+
+![Polar coordinate transformation showing angle concentration for attention values](/blog/memory-wall-kv-cache/2.png)
 
 ## The magic of the sign bit: getting to 1-bit accuracy
 

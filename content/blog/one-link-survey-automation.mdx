@@ -1,12 +1,15 @@
 ---
 title: "One Link to Rule Them All: Conquering Survey Chaos"
 description: "A Google Sheets + Apps Script workflow for randomized survey assignment with live usage tracking — at zero infrastructure cost."
-date: "2025-05-29"
+date: "2025-03-28"
 category: "Engineering"
 tags: ["Automation", "Google Apps Script", "Workflow Design"]
+draft: false
 ---
 
 I needed to distribute 20 survey forms fairly, with response limits per form, while keeping the participant experience simple. This solution replaced manual assignment with one public link and automated routing.
+
+![Cover illustration for the survey automation write-up](/blog/one-link-survey-automation/cover.png)
 
 ## The problem
 
@@ -22,6 +25,8 @@ I built a lightweight system with two spreadsheet tabs and one Apps Script web a
 - **Records** tab: logs each assignment event with timestamp and selected form.
 - **Apps Script web app**: routes users to an eligible form and writes logs automatically.
 
+![Form database sheet with URL and count columns — the BD Forms tab used as the routing control layer](/blog/one-link-survey-automation/sheet_1.png)
+
 ## Count tracking logic
 
 Assignment counts were computed with an array formula so each form's usage updates as soon as a record is appended.
@@ -32,6 +37,8 @@ Assignment counts were computed with an array formula so each form's usage updat
 
 This made response balancing visible in real time without manual auditing.
 
+![Assignment records sheet with timestamp rows — the Records tab storing assignment history and enabling live count updates](/blog/one-link-survey-automation/sheet_2.png)
+
 ## App flow
 
 1. User opens one shared public URL.
@@ -40,9 +47,13 @@ This made response balancing visible in real time without manual auditing.
 4. Selection is logged to Records.
 5. UI returns user-specific destination form link.
 
+![Web interface used by survey participants — single-link experience with generated destination form](/blog/one-link-survey-automation/survey_webpage.png)
+
 ## Implementation notes
 
 Core Apps Script functions handled three responsibilities: rendering the entry page, selecting a valid target form, and writing assignment logs. Once configured, the workflow required no daily manual intervention.
+
+![Apps Script editor showing routing logic — the Apps Script function layer handling routing and event logging](/blog/one-link-survey-automation/app_script.png)
 
 ## Outcome
 

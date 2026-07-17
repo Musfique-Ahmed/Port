@@ -315,23 +315,35 @@ export async function scrapeYearTotal(): Promise<{ total: number; activeDays: nu
   }
 }
 
-// Build a 12-week x 7-day grid ending today.
+// Build a GitHub-aligned contribution-grid: a column per Sunday-bounded
+// week, 7 rows (Sun..Sat). Date range is derived from the data, not a
+// fixed number of weeks back from today. This ensures the full year of
+// data GitHub returns actually renders — including the dense months
+// that would otherwise fall outside a 52-week-back window.
 export function buildHeatmapGrid(
-  dayCounts: Map<string, number>,
-  weeks = 12
+  dayCounts: Map<string, number>
 ): { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[][] {
-  const grid: { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[][] = [];
-  const today = new Date();
-  // Find Sunday of the current week
-  const dow = today.getUTCDay();
-  const endSunday = new Date(today);
-  endSunday.setUTCDate(today.getUTCDate() + (6 - dow));
-  // Start from (weeks-1) weeks before
-  const startSunday = new Date(endSunday);
-  startSunday.setUTCDate(endSunday.getUTCDate() - (weeks - 1) * 7);
+  if (dayCounts.size === 0) return [];
 
-  // GitHub's data-level is already a 0..4 bucket. If the input is already
-  // in that range, pass it through. Otherwise derive by relative max.
+  // Find the date range across all data points.
+  const dates = Array.from(dayCounts.keys()).sort();
+  const earliest = new Date(dates[0] + "T00:00:00Z");
+  const latest = new Date(dates[dates.length - 1] + "T00:00:00Z");
+
+  // Snap earliest to its preceding Sunday (column boundary).
+  const startSunday = new Date(earliest);
+  const startDow = startSunday.getUTCDay();
+  startSunday.setUTCDate(startSunday.getUTCDate() - startDow);
+
+  // Snap latest to its following Saturday (last row of last column).
+  const endSaturday = new Date(latest);
+  const endDow = endSaturday.getUTCDay();
+  endSaturday.setUTCDate(endSaturday.getUTCDate() + (6 - endDow));
+
+  const totalDays =
+    Math.round((endSaturday.getTime() - startSunday.getTime()) / 86400000) + 1;
+  const totalWeeks = Math.ceil(totalDays / 7);
+
   const counts = Array.from(dayCounts.values());
   const max = counts.length ? Math.max(...counts) : 0;
   const looksLikeLevel = counts.every((v) => v >= 0 && v <= 4);
@@ -346,7 +358,8 @@ export function buildHeatmapGrid(
     return 1;
   };
 
-  for (let w = 0; w < weeks; w++) {
+  const grid: { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[][] = [];
+  for (let w = 0; w < totalWeeks; w++) {
     const col: { date: string; count: number; level: 0 | 1 | 2 | 3 | 4 }[] = [];
     for (let d = 0; d < 7; d++) {
       const date = new Date(startSunday);

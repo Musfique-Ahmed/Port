@@ -122,8 +122,8 @@ async function HeatmapBlock() {
   // total isn't critical and a wrong number looks worse than no number.
   const yearTotal = graph?.totalContributions ?? null;
 
-  // 52 weeks ≈ 1 year matches GitHub's own profile heatmap range.
-  const grid = buildHeatmapGrid(dayCounts, 52);
+  // Grid spans the full data range (data-driven, not fixed-width).
+  const grid = buildHeatmapGrid(dayCounts);
   const hasActivity =
     dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
