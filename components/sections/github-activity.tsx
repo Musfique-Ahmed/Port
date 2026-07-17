@@ -62,16 +62,6 @@ function HeatmapGrid({
 }: {
   grid: ReturnType<typeof buildHeatmapGrid>;
 }) {
-  // 5 levels: 0 (empty), 1-4 (low to high). Colors sit on a dark surface,
-  // so we use slightly higher opacities than GitHub does (which uses
-  // green on white) — otherwise level-1 is invisible against bg-ink.
-  const levelClasses: Record<0 | 1 | 2 | 3 | 4, string> = {
-    0: "bg-surface-2",
-    1: "bg-accent/30",
-    2: "bg-accent/55",
-    3: "bg-accent/80",
-    4: "bg-accent",
-  };
   return (
     <div className="flex gap-1">
       {grid.map((col, i) => (
@@ -80,10 +70,8 @@ function HeatmapGrid({
             <div
               key={cell.date}
               title={`${cell.date} · ${cell.count} commit${cell.count === 1 ? "" : "s"}`}
-              className={cn(
-                "h-3 w-3 rounded-sm border border-hairline transition-colors",
-                levelClasses[cell.level]
-              )}
+              className="h-3 w-3 rounded-sm border border-hairline transition-colors"
+              style={{ backgroundColor: HEATMAP_LEVEL_BG[cell.level] }}
             />
           ))}
         </div>
@@ -91,6 +79,15 @@ function HeatmapGrid({
     </div>
   );
 }
+
+// Module-scope so the legend and the grid use the same hex values.
+const HEATMAP_LEVEL_BG: Record<0 | 1 | 2 | 3 | 4, string> = {
+  0: "#161618", // surface-2 — empty cell
+  1: "#1B3A2C", // very dim emerald
+  2: "#10B981", // mid emerald at ~33%
+  3: "#34D399", // accent-fg — bright emerald
+  4: "#10B981", // accent — full emerald
+};
 
 function cn(...c: (string | false | undefined | null)[]) {
   return c.filter(Boolean).join(" ");
@@ -108,9 +105,8 @@ async function HeatmapBlock() {
   // Levels are 0..4 buckets directly from GitHub's contribution graph.
   // Pass them through; buildHeatmapGrid preserves the level values.
   const dayCounts = levels ?? new Map<string, number>();
-  // 26 weeks ≈ 6 months gives a useful shape — long enough to capture
-  // burst patterns (sprints, semester work) but recent enough to feel live.
-  const grid = buildHeatmapGrid(dayCounts, 26);
+  // 52 weeks ≈ 1 year matches GitHub's own profile heatmap range.
+  const grid = buildHeatmapGrid(dayCounts, 52);
   const hasActivity = dayCounts.size > 0 && Array.from(dayCounts.values()).some((v) => v > 0);
 
   // Build month labels along the top axis.
@@ -134,7 +130,7 @@ async function HeatmapBlock() {
           <div>
             <div className="text-sm font-semibold text-white">Currently shipping</div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-muted-2">
-              Last 6 months · public activity
+              Last 12 months · public activity
             </div>
           </div>
         </div>
@@ -181,17 +177,11 @@ async function HeatmapBlock() {
           {/* Legend */}
           <div className="mt-4 flex items-center justify-end gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-2">
             <span>Less</span>
-            {[0, 1, 2, 3, 4].map((l) => (
+            {([0, 1, 2, 3, 4] as const).map((l) => (
               <span
                 key={l}
-                className={cn(
-                  "h-3 w-3 rounded-sm border border-hairline",
-                  l === 0 && "bg-surface-2",
-                  l === 1 && "bg-accent/30",
-                  l === 2 && "bg-accent/55",
-                  l === 3 && "bg-accent/80",
-                  l === 4 && "bg-accent"
-                )}
+                className="h-3 w-3 rounded-sm border border-hairline"
+                style={{ backgroundColor: HEATMAP_LEVEL_BG[l] }}
               />
             ))}
             <span>More</span>
